@@ -1,5 +1,6 @@
 package com.findora.findora.users.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,8 +8,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.findora.findora.agreement.dto.AgreementRequestDTO;
+import com.findora.findora.agreement.model.AgreementType;
+import com.findora.findora.agreement.model.UserAgreement;
+import com.findora.findora.agreement.repository.UserAgreementRepository;
 import com.findora.findora.common.email.EmailSender;
 import com.findora.findora.emailverification.service.EmailVerificationService;
+import com.findora.findora.users.dto.UserRegisterRequestDTO;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
 
@@ -23,33 +29,46 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
     private final EmailSender emailSender;
+    private final UserAgreementRepository userAgreementRepository;
     // 사용자 등록
     @Transactional
-    public User registerUser(String loginId, String email, String password, String nickname, User.Role role) {
+    public User registerUser(UserRegisterRequestDTO userRegisterRequestDTO) {
         // 중복 검사
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(userRegisterRequestDTO.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
         
-        if (userRepository.existsByNickname(nickname)) {
+        if (userRepository.existsByNickname(userRegisterRequestDTO.getNickname())) {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
-        if (!emailVerificationService.isVerified(email)) {
+        if (!emailVerificationService.isVerified(userRegisterRequestDTO.getEmail())) {
             throw new IllegalArgumentException("이메일 인증이 필요합니다.");
         }
         
         // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(password);
+        String encodedPassword = passwordEncoder.encode(userRegisterRequestDTO.getPassword());
 
         // 사용자 생성 (이메일 인증이 이미 완료된 상태)
         User user = User.builder()
-                .loginId(loginId)
-                .email(email)
+                .loginId(userRegisterRequestDTO.getLoginId())
+                .email(userRegisterRequestDTO.getEmail())
                 .password(encodedPassword)
-                .nickname(nickname)
-                .role(role)
+                .nickname(userRegisterRequestDTO.getNickname())
+                .role(User.Role.valueOf(userRegisterRequestDTO.getRole()))
                 .emailVerified(true) // 인증 완료 상태로 저장!
                 .build();
+
+        for (AgreementRequestDTO dto : userRegisterRequestDTO.getAgreements()) {
+            AgreementType type = AgreementType.valueOf(dto.getType().toUpperCase());
+            UserAgreement agreement = UserAgreement.builder()
+                    .user(user)
+                    .type(type)
+                    .agreed(dto.isAgreed())
+                    .agreedAt(LocalDateTime.now())
+                    .build();
+            userAgreementRepository.save(agreement);
+        }
+
         return userRepository.save(user);
     }
     
