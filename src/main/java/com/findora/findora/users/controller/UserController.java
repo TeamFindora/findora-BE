@@ -99,7 +99,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         return userService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -117,7 +117,7 @@ public class UserController {
     @GetMapping("/email/{email}")
     public ResponseEntity<?> getUserByEmail(
             @Parameter(description = "이메일 주소", required = true, example = "user@example.com")
-            @PathVariable String email) {
+            @PathVariable("email") String email) {
         return userService.findByEmail(email)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -129,8 +129,8 @@ public class UserController {
             examples = @ExampleObject(value = "{\"exists\": false}")))
     @GetMapping("/check-nickname")
     public ResponseEntity<?> checkNickname(
-            @Parameter(description = "확인할 닉네임", required = true, example = "사용자")
-            @RequestParam String nickname) {
+            @Parameter(description = "확인할 닉네임", required = true, example = "홍길동")
+            @RequestParam("nickname") String nickname) {
         boolean exists = userRepository.existsByNickname(nickname);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
@@ -142,47 +142,11 @@ public class UserController {
     @GetMapping("/check-loginid")
     public ResponseEntity<?> checkLoginId(
             @Parameter(description = "확인할 로그인 ID", required = true, example = "user123")
-            @RequestParam String loginId) {
+            @RequestParam("loginId") String loginId) {
         boolean exists = userRepository.existsByLoginId(loginId);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
-
-    @Operation(summary = "이메일 인증코드 발송", description = "이메일로 인증코드를 발송합니다.")
-    @ApiResponse(responseCode = "200", description = "인증코드 발송 성공",
-        content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{\"message\": \"이메일로 인증코드를 보냈습니다.\"}")))
-    @PostMapping("/send-email-code")
-    public ResponseEntity<?> sendEmailCode(
-            @Parameter(description = "이메일 주소", required = true,
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(value = "{\"email\": \"user@example.com\"}")))
-            @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        emailVerificationService.sendCode(email);
-        return ResponseEntity.ok(Map.of("message", "이메일로 인증코드를 보냈습니다."));
-    }
-    
-    @Operation(summary = "이메일 인증", description = "사용자의 이메일을 인증합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "이메일 인증 성공",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"message\": \"이메일이 성공적으로 인증되었습니다.\"}"))),
-        @ApiResponse(responseCode = "400", description = "인증 실패",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\": \"인증에 실패했습니다.\"}")))
-    })
-    @PostMapping("/{id}/verify-email")
-    public ResponseEntity<?> verifyEmail(
-            @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id) {
-        try {
-            userService.verifyEmail(id);
-            return ResponseEntity.ok(Map.of("message", "이메일이 성공적으로 인증되었습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
+ 
     @Operation(summary = "비밀번호 변경", description = "사용자의 비밀번호를 변경합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공",
@@ -195,8 +159,10 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<?> changePassword(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id,
-            @Parameter(description = "새 비밀번호", required = true,
+            @PathVariable("id") Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "새 비밀번호",
+                required = true,
                 content = @Content(mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"newPassword\": \"newPassword123\"}")))
             @RequestBody Map<String, String> request) {
@@ -221,8 +187,10 @@ public class UserController {
     @PutMapping("/{id}/nickname")
     public ResponseEntity<?> changeNickname(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id,
-            @Parameter(description = "새 닉네임", required = true,
+            @PathVariable("id") Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "새 닉네임",
+                required = true,
                 content = @Content(mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"newNickname\": \"새닉네임\"}")))
             @RequestBody Map<String, String> request) {

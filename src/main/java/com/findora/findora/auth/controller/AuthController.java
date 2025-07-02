@@ -42,16 +42,23 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = LoginResponse.class),
                 examples = @ExampleObject(value = """
                     {
-                        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                        "refreshToken": "550e8400-e29b-41d4-a716-446655440000",
-                        "tokenType": "Bearer",
-                        "expiresIn": 86400000
+                      \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlciIsImlhdCI6MTc1MTQ1MTgxNCwiZXhwIjoxNzUxNTM4MjE0fQ.Z0vPTowDGjclbhljUbxPeAxNAvoSFiHx2AXWp0SQGUk\",
+                      \"refreshToken\": \"4c2a71bb-4616-4290-8b48-689699ba6e05\",
+                      \"tokenType\": \"Bearer\",
+                      \"expiresIn\": 86400000,
+                      \"user\": {
+                        \"userId\": 12,
+                        \"loginId\": \"testuser\",
+                        \"email\": \"testuser@test.com\",
+                        \"nickname\": \"테스트유저\",
+                        \"role\": \"STUDENT\"
+                      }
                     }
-                    """))),
+                """))),
         @ApiResponse(responseCode = "401", description = "인증 실패",
             content = @Content(examples = @ExampleObject(value = """
                 {
-                    "message": "Invalid email or password"
+                    \"message\": \"Invalid email or password\"
                 }
                 """)))
     })
