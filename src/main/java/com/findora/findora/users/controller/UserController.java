@@ -43,7 +43,7 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "사용자 등록 성공",
             content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"message\": \"사용자가 성공적으로 등록되었습니다.\", \"userId\": 1, \"loginId\": \"user123\", \"email\": \"user@example.com\", \"nickname\": \"사용자\"}"))),
+                examples = @ExampleObject(value = "{\"message\": \"사용자가 성공적으로 등록되었습니다.\", \"userId\": 1, \"loginId\": \"user123\", \"email\": \"user@example.com\", \"nickname\": \"홍길동\"}"))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 필수 약관 미동의",
             content = @Content(mediaType = "application/json",
                 examples = @ExampleObject(value = "{\"error\": \"필수 약관에 동의해야 합니다.\"}"))),
@@ -53,7 +53,9 @@ public class UserController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(
-            @Parameter(description = "사용자 등록 정보", required = true)
+            @Parameter(description = "사용자 등록 정보", required = true,
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = "{\n  \"loginId\": \"user123\",\n  \"password\": \"password123\",\n  \"nickname\": \"홍길동\",\n  \"email\": \"user@example.com\",\n  \"role\": \"USER\",\n  \"agreements\": [\n    {\"type\": \"SERVICE\", \"agreed\": true},\n    {\"type\": \"PRIVACY\", \"agreed\": true},\n    {\"type\": \"MARKETING\", \"agreed\": false}\n  ]\n}")))
             @RequestBody UserRegisterRequestDTO request) {
         try {
              boolean allRequiredAgreed = request.getAgreements().stream()
@@ -80,34 +82,6 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "사용자 로그인", description = "loginId와 password로 로그인합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "로그인 성공",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"userId\": 1, \"loginId\": \"user123\", \"nickname\": \"사용자\", \"role\": \"USER\"}"))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\": \"loginId와 password만 입력해야 합니다.\"}")))
-    })
-    @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @Parameter(description = "로그인 정보", required = true,
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(value = "{\"loginId\": \"user123\", \"password\": \"password123\"}")))
-            @RequestBody Map<String, String> request) {
-        if (request.size() != 2 || !request.containsKey("loginId") || !request.containsKey("password")) {
-        return ResponseEntity.badRequest().body(Map.of("error", "loginId와 password만 입력해야 합니다."));
-    }
-        String loginId = request.get("loginId");
-        String password = request.get("password");
-        User user = userService.login(loginId, password);
-         return ResponseEntity.ok(Map.of(
-            "userId", user.getId(),
-            "loginId", user.getLoginId(),
-            "nickname", user.getNickname(),
-            "role", user.getRole().name()
-        ));
-    }
     
     @Operation(summary = "모든 사용자 조회", description = "등록된 모든 사용자 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "사용자 목록 조회 성공")
@@ -133,8 +107,12 @@ public class UserController {
     
     @Operation(summary = "이메일로 사용자 조회", description = "이메일 주소로 특정 사용자를 조회합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "사용자 조회 성공"),
-        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+        @ApiResponse(responseCode = "200", description = "사용자 조회 성공",
+            content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = "{\"id\": 1, \"loginId\": \"user123\", \"nickname\": \"홍길동\", \"email\": \"user@example.com\", \"role\": \"USER\", \"emailVerified\": true}"))),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+            content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = "{}")))
     })
     @GetMapping("/email/{email}")
     public ResponseEntity<?> getUserByEmail(
