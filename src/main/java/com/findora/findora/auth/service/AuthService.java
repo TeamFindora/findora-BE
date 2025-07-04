@@ -105,4 +105,41 @@ public class AuthService {
             throw new RuntimeException("Token refresh failed", e);
         }
     }
+
+    /**
+     * User 객체로 LoginResponse 생성 (소셜 로그인용)
+     */
+    public LoginResponse createLoginResponse(User user, String clientIp) {
+        // UserDetails 생성
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+            .username(user.getLoginId())
+            .password(user.getPassword())
+            .roles(user.getRole().name())
+            .build();
+        
+        // JWT Access Token 생성
+        String accessToken = jwtService.generateToken(userDetails);
+        
+        // Refresh Token 생성 및 DB 저장
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getLoginId(), clientIp);
+        
+        log.info("Login response created for user: {}", user.getLoginId());
+        
+        // 사용자 정보 생성
+        LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
+            .userId(user.getId())
+            .loginId(user.getLoginId())
+            .email(user.getEmail())
+            .nickname(user.getNickname())
+            .role(user.getRole().name())
+            .build();
+        
+        return LoginResponse.builder()
+            .accessToken(accessToken)
+            .refreshToken(refreshToken.getToken())
+            .tokenType("Bearer")
+            .expiresIn(86400000L) // 24시간
+            .user(userInfo)
+            .build();
+    }
 } 
