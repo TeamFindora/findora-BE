@@ -9,6 +9,6 @@ public class SocialLoginRequest {
     @Schema(description = "인가 코드", example = "abcd1234567890", required = true)
     private String authorizationCode;
     
-    @Schema(description = "리다이렉트 URI", example = "http://localhost:3000/auth/callback", required = true)
+    @Schema(description = "리다이렉트 URI", example = "http://localhost:8080/api/auth/social/oauth/kakao/code", required = true)
     private String redirectUri;
 } 
