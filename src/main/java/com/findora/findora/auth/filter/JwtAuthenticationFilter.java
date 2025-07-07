@@ -28,6 +28,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        // 인증이 필요없는 경로들은 JWT 필터를 건너뜀
+        return path.startsWith("/api/auth/") ||
+               path.startsWith("/api/users/register") ||
+               path.startsWith("/api/users/login") ||
+               path.startsWith("/api/users/check-") ||
+               path.startsWith("/api/users/send-email-code") ||
+               path.contains("/verify-email") ||
+               path.startsWith("/api/email/") ||
+               path.startsWith("/swagger-ui/") ||
+               path.startsWith("/v3/api-docs/") ||
+               path.equals("/swagger-ui.html") ||
+               path.startsWith("/webjars/") ||
+               path.endsWith(".html") ||
+               path.startsWith("/static/") ||
+               path.startsWith("/css/") ||
+               path.startsWith("/js/") ||
+               path.startsWith("/images/");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
