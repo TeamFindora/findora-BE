@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/email/send-code").permitAll()
                 .requestMatchers("/api/email/verify-code").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                .requestMatchers("/*.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
