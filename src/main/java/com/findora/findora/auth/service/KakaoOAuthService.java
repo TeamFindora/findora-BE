@@ -1,15 +1,21 @@
 package com.findora.findora.auth.service;
 
-import com.findora.findora.auth.dto.KakaoTokenResponse;
-import com.findora.findora.auth.dto.KakaoUserInfo;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import com.findora.findora.auth.dto.KakaoTokenResponse;
+import com.findora.findora.auth.dto.KakaoUserInfo;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -37,7 +43,12 @@ public class KakaoOAuthService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
+        
+        // 클라이언트 시크릿이 있는 경우에만 추가 (카카오는 선택사항)
+        if (clientSecret != null && !clientSecret.trim().isEmpty()) {
+            params.add("client_secret", clientSecret);
+        }
+        
         params.add("redirect_uri", redirectUri);
         params.add("code", authorizationCode);
         
