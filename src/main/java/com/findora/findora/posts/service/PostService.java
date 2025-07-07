@@ -20,25 +20,22 @@ public class PostService {
 
     @Transactional
     public Long createPost(PostRequestDto requestDto) {
-        Post post = Post.builder()
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post = requestDto.toEntity();
         return postRepository.save(post).getId();
     }
 
     @Transactional(readOnly = true)
     public List<PostResponseDto> getAllPosts() {
         return postRepository.findAll().stream()
-                .map(p -> new PostResponseDto(p.getId(), p.getTitle(), p.getContent(), p.getCreatedAt()))
+                .map(PostResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
+
     @Transactional(readOnly = true)
     public PostResponseDto getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
-        return new PostResponseDto(post.getId(), post.getTitle(), post.getContent(), post.getCreatedAt());
+        return PostResponseDto.fromEntity(post);
     }
 
     @Transactional
