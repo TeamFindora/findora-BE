@@ -10,30 +10,34 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public enum Name {
+        FREE, PI, BEST, ABROAD, GSPASS, INTERN, PROMOTE, WORK
+    }
+
+    public enum Visibility {
+        PUBLIC, PI, STUDENT
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CategoryName name;
+    @Column(nullable = false, unique = true)
+    private Name name;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Visibility visibility;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    public enum CategoryName {
-        HOT, BEST, PI
-    }
-
-    public enum Visibility {
-        STUDENT, PI, ADMIN
-    }
-
-    public void update(CategoryName name, Visibility visibility) {
+    @Builder
+    public Category(Name name, Visibility visibility) {
         this.name = name;
         this.visibility = visibility;
+        this.createdAt = LocalDateTime.now();
     }
+
 }
