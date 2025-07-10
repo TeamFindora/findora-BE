@@ -13,49 +13,24 @@ public class CategoryInitializer {
     private final CategoryRepository categoryRepository;
 
     @PostConstruct
-    public void initCategories() {
-        // 이미 등록된 카테고리가 있으면 초기화 안 함
-        if (categoryRepository.count() > 0) return;
+    public void insertInitialCategories() {
+        insertIfNotExists(Category.Name.FREE, Category.Visibility.PUBLIC);
+        insertIfNotExists(Category.Name.PI, Category.Visibility.PI);
+        insertIfNotExists(Category.Name.BEST,Category.Visibility.PUBLIC);
+        insertIfNotExists(Category.Name.ABROAD, Category.Visibility.PUBLIC);
+        insertIfNotExists(Category.Name.GSPASS, Category.Visibility.STUDENT);
+        insertIfNotExists(Category.Name.INTERN, Category.Visibility.STUDENT);
+        insertIfNotExists(Category.Name.PROMOTE, Category.Visibility.PUBLIC);
+        insertIfNotExists(Category.Name.WORK, Category.Visibility.STUDENT);
+    }
 
-        //자유게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.FREE)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //교수전용게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.PI)
-                .visibility(Category.Visibility.PI) // PI는 PI 권한만 접근 가능
-                .build());
-        //베스트게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.BEST)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //유학게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.ABROAD)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //대학원합격후기게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.GSPASS)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //인턴게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.INTERN)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //홍보게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.PROMOTE)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
-        //취업게시판
-        categoryRepository.save(Category.builder()
-                .name(Category.Name.WORK)
-                .visibility(Category.Visibility.PUBLIC)
-                .build());
+    private void insertIfNotExists(Category.Name name, Category.Visibility visibility) {
+        categoryRepository.findByName(name)
+                .orElseGet(() -> categoryRepository.save(
+                        Category.builder()
+                                .name(name)
+                                .visibility(visibility)
+                                .build()
+                ));
     }
 }
