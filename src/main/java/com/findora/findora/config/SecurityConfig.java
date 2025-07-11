@@ -2,6 +2,7 @@ package com.findora.findora.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -46,6 +47,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/*/verify-email").permitAll()
                 .requestMatchers("/api/email/send-code").permitAll()
                 .requestMatchers("/api/email/verify-code").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll() // Categories 조회만 허용
+                .requestMatchers(HttpMethod.GET, "/api/posts").permitAll() // Posts 전체 조회 허용
+                .requestMatchers(HttpMethod.GET, "/api/posts/{id}").permitAll() // Posts 상세 조회 허용
+                .requestMatchers(HttpMethod.GET, "/api/posts/category/{categoryId}").permitAll() // Posts 카테고리별 조회 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                 .requestMatchers("/*.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().authenticated()

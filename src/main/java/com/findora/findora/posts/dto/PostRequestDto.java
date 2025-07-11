@@ -2,11 +2,12 @@ package com.findora.findora.posts.dto;
 
 import com.findora.findora.categories.model.Category;
 import com.findora.findora.posts.model.Post;
+import com.findora.findora.users.model.User;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -26,11 +27,16 @@ public class PostRequestDto {
     @NotNull(message = "카테고리 ID를 입력하세요.")
     private Long categoryId;
 
-    public Post toEntity(Category category) {
+    @Schema(description = "작성자 ID", example = "1")
+    @NotNull(message = "작성자 ID를 입력하세요.")
+    private Long userId;
+
+    public Post toEntity(Category category, User user) {
         return Post.builder()
                 .title(title)
                 .content(content)
                 .category(category)
+                .user(user)
                 .build();
     }
 

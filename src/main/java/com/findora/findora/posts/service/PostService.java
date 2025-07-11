@@ -1,18 +1,21 @@
 package com.findora.findora.posts.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.findora.findora.categories.model.Category;
 import com.findora.findora.categories.repository.CategoryRepository;
 import com.findora.findora.posts.dto.PostRequestDto;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.model.Post;
 import com.findora.findora.posts.repository.PostRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.findora.findora.users.model.User;
+import com.findora.findora.users.repository.UserRepository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +24,17 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public Long createPost(PostRequestDto requestDto) {
         Category category = categoryRepository.findById(requestDto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
-        Post post = requestDto.toEntity(category);
+        
+        User user = userRepository.findById(requestDto.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
+        
+        Post post = requestDto.toEntity(category, user);
         return postRepository.save(post).getId();
     }
 
