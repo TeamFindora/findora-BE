@@ -19,6 +19,7 @@ import com.findora.findora.posts.dto.PostRequestDto;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.service.PostService;
 import com.findora.findora.users.service.CustomUserDetails;
+import com.findora.findora.common.SuccessResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -76,9 +77,15 @@ public class PostController {
             description = "게시글 작성 성공",
             content = @Content(
                 mediaType = "application/json",
+                schema = @Schema(implementation = SuccessResponse.class),
                 examples = @ExampleObject(
                     name = "성공 응답",
-                    value = "15"
+                    value = """
+                    {
+                      \"message\": \"게시글 작성 성공하였습니다.\",
+                      \"timestamp\": \"2025-07-07T14:30:00\"
+                    }
+                    """
                 )
             )
         ),
@@ -105,7 +112,7 @@ public class PostController {
             description = "권한 부족 (해당 카테고리에 글 작성 권한 없음)"
         )
     })
-    public ResponseEntity<Long> create(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody PostRequestDto dto) {
+    public ResponseEntity<SuccessResponse> create(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody PostRequestDto dto) {
         return ResponseEntity.ok(postService.createPost(dto, user.getId()));
     }
 
@@ -317,8 +324,21 @@ public class PostController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "204", 
-            description = "게시글 수정 성공"
+            responseCode = "200", 
+            description = "게시글 수정 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = SuccessResponse.class),
+                examples = @ExampleObject(
+                    name = "성공 응답",
+                    value = """
+                    {
+                      \"message\": \"게시글 수정 성공하였습니다.\",
+                      \"timestamp\": \"2025-07-07T14:30:00\"
+                    }
+                    """
+                )
+            )
         ),
         @ApiResponse(
             responseCode = "400", 
@@ -337,14 +357,13 @@ public class PostController {
             description = "게시글을 찾을 수 없음"
         )
     })
-    public ResponseEntity<Void> update(
+    public ResponseEntity<SuccessResponse> update(
         @AuthenticationPrincipal CustomUserDetails user,
         @Parameter(description = "수정할 게시글 ID", example = "15", required = true)
         @PathVariable Long id, 
         @RequestBody PostRequestDto dto
     ) {
-        postService.updatePost(id, dto, user.getId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(postService.updatePost(id, dto, user.getId()));
     }
 
     @DeleteMapping("/{id}")
@@ -355,8 +374,21 @@ public class PostController {
     )
     @ApiResponses(value = {
         @ApiResponse(
-            responseCode = "204", 
-            description = "게시글 삭제 성공"
+            responseCode = "200", 
+            description = "게시글 삭제 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = SuccessResponse.class),
+                examples = @ExampleObject(
+                    name = "성공 응답",
+                    value = """
+                    {
+                      \"message\": \"게시글 삭제 성공하였습니다.\",
+                      \"timestamp\": \"2025-07-07T14:30:00\"
+                    }
+                    """
+                )
+            )
         ),
         @ApiResponse(
             responseCode = "401", 
@@ -371,12 +403,11 @@ public class PostController {
             description = "게시글을 찾을 수 없음"
         )
     })
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<SuccessResponse> delete(
         @AuthenticationPrincipal CustomUserDetails user,
         @Parameter(description = "삭제할 게시글 ID", example = "15", required = true)
         @PathVariable Long id
     ) {
-        postService.deletePost(id, user.getId());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(postService.deletePost(id, user.getId()));
     }
 }

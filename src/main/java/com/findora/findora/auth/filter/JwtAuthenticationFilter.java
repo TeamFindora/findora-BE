@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.contains("/verify-email") ||
                path.startsWith("/api/email/") ||
                path.startsWith("/swagger-ui/") ||
+               path.startsWith("/v3/api-docs") ||
                path.startsWith("/v3/api-docs/") ||
                path.equals("/swagger-ui.html") ||
                path.startsWith("/webjars/") ||
