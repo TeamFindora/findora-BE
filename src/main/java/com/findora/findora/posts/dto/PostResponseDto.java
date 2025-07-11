@@ -1,15 +1,25 @@
 package com.findora.findora.posts.dto;
 
+import com.findora.findora.categories.dto.CategoryResponseDto;
+import com.findora.findora.posts.model.Post;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PostResponseDto {
     @Schema(description = "게시글 ID")
     private Long id;
+
+    @Schema(description = "카테고리 ID")
+    private CategoryResponseDto category;
 
     @Schema(description = "제목")
     private String title;
@@ -17,11 +27,25 @@ public class PostResponseDto {
     @Schema(description = "본문")
     private String content;
 
-    @Schema(description = "작성일시")
+    @Schema(description = "작성일자")
     private LocalDateTime createdAt;
 
-    /*userid, categoryid
-    private Long categoryid;
+    @Schema(description = "수정일자")
+    private LocalDateTime updatedAt;
+
+
+    // Entity → DTO 변환 메서드
+    public static PostResponseDto fromEntity(Post post) {
+        return PostResponseDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .category(CategoryResponseDto.fromEntity(post.getCategory()))
+                .build();
+    }
+    /*userid
     private Long userid;
      */
 }
