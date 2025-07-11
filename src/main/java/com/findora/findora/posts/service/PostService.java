@@ -14,6 +14,7 @@ import com.findora.findora.posts.model.Post;
 import com.findora.findora.posts.repository.PostRepository;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
+import com.findora.findora.common.SuccessResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +28,7 @@ public class PostService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Long createPost(PostRequestDto requestDto, Long userId) {
+    public SuccessResponse createPost(PostRequestDto requestDto, Long userId) {
         Category category = categoryRepository.findById(requestDto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
         
@@ -35,7 +36,8 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
         
         Post post = requestDto.toEntity(category, user);
-        return postRepository.save(post).getId();
+        Post saved = postRepository.save(post);
+        return SuccessResponse.of("게시글 작성 성공하였습니다.");
     }
 
     public List<PostResponseDto> getAllPosts() {
@@ -60,22 +62,24 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(Long id, PostRequestDto requestDto, Long userId) {
+    public SuccessResponse updatePost(Long id, PostRequestDto requestDto, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
         if (!post.getUser().getId().equals(userId)) {
             throw new SecurityException("작성자만 수정할 수 있습니다.");
         }
         post.update(requestDto.getTitle(), requestDto.getContent(), post.getCategory());
+        return SuccessResponse.of("게시글 수정 성공하였습니다.");
     }
 
     @Transactional
-    public void deletePost(Long id, Long userId) {
+    public SuccessResponse deletePost(Long id, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
         if (!post.getUser().getId().equals(userId)) {
             throw new SecurityException("작성자만 삭제할 수 있습니다.");
         }
         postRepository.deleteById(id);
+        return SuccessResponse.of("게시글 삭제 성공하였습니다.");
     }
 }

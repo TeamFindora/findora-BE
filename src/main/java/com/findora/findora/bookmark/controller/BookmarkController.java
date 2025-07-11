@@ -5,6 +5,7 @@ import com.findora.findora.bookmark.dto.BookmarkResponseDto;
 import com.findora.findora.bookmark.model.Bookmark;
 import com.findora.findora.bookmark.service.BookmarkService;
 import com.findora.findora.users.service.CustomUserDetails;
+import com.findora.findora.common.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -53,18 +54,17 @@ public class BookmarkController {
         )
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공", content = @Content(schema = @Schema(implementation = Long.class), examples = @ExampleObject(value = "1"))),
+        @ApiResponse(responseCode = "200", description = "즐겨찾기 추가 성공", content = @Content(schema = @Schema(implementation = SuccessResponse.class), examples = @ExampleObject(value = "{\"message\":\"즐겨찾기 추가 성공하였습니다.\",\"timestamp\":\"2025-07-11T14:30:00\"}"))),
         @ApiResponse(responseCode = "400", description = "이미 즐겨찾기한 게시글", content = @Content(examples = @ExampleObject(value = "{\"error\":\"이미 즐겨찾기한 게시글입니다.\"}"))),
         @ApiResponse(responseCode = "401", description = "인증 정보 없음", content = @Content(examples = @ExampleObject(value = "{\"error\":\"인증 정보가 없습니다.\"}")))
     })
-    public ResponseEntity<Long> addBookmark(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody BookmarkRequestDto dto) {
+    public ResponseEntity<SuccessResponse> addBookmark(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody BookmarkRequestDto dto) {
         if (user == null) {
             log.error("[Bookmark] 인증 정보가 없습니다. principal=null");
             throw new RuntimeException("인증 정보가 없습니다.");
         }
         log.info("[Bookmark] 즐겨찾기 추가 요청 - userId: {}, loginId: {}, postId: {}", user.getId(), user.getLoginId(), dto.getPostId());
-        Bookmark bookmark = bookmarkService.addBookmark(user.getId(), dto.getPostId());
-        return ResponseEntity.ok(bookmark.getId());
+        return ResponseEntity.ok(bookmarkService.addBookmark(user.getId(), dto.getPostId()));
     }
 
     @DeleteMapping
@@ -89,12 +89,11 @@ public class BookmarkController {
         )
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "즐겨찾기 삭제 성공"),
+        @ApiResponse(responseCode = "200", description = "즐겨찾기 삭제 성공", content = @Content(schema = @Schema(implementation = SuccessResponse.class), examples = @ExampleObject(value = "{\"message\":\"즐겨찾기 삭제 성공하였습니다.\",\"timestamp\":\"2025-07-11T14:30:00\"}"))),
         @ApiResponse(responseCode = "404", description = "즐겨찾기 내역 없음", content = @Content(examples = @ExampleObject(value = "{\"error\":\"즐겨찾기 내역이 없습니다.\"}")))
     })
-    public ResponseEntity<Void> removeBookmark(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody BookmarkRequestDto dto) {
-        bookmarkService.removeBookmark(user.getId(), dto.getPostId());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<SuccessResponse> removeBookmark(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody BookmarkRequestDto dto) {
+        return ResponseEntity.ok(bookmarkService.removeBookmark(user.getId(), dto.getPostId()));
     }
 
     @GetMapping("/user/me")
