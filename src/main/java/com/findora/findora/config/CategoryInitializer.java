@@ -18,10 +18,10 @@ public class CategoryInitializer {
         insertIfNotExists(Category.Name.PI, Category.Visibility.PI);
         insertIfNotExists(Category.Name.BEST,Category.Visibility.PUBLIC);
         insertIfNotExists(Category.Name.ABROAD, Category.Visibility.PUBLIC);
-        insertIfNotExists(Category.Name.GSPASS, Category.Visibility.STUDENT);
-        insertIfNotExists(Category.Name.INTERN, Category.Visibility.STUDENT);
+        insertIfNotExists(Category.Name.GSPASS, Category.Visibility.PUBLIC);
+        insertIfNotExists(Category.Name.INTERN, Category.Visibility.PUBLIC);
         insertIfNotExists(Category.Name.PROMOTE, Category.Visibility.PUBLIC);
-        insertIfNotExists(Category.Name.WORK, Category.Visibility.STUDENT);
+        insertIfNotExists(Category.Name.WORK, Category.Visibility.PUBLIC);
     }
 
     private void insertIfNotExists(Category.Name name, Category.Visibility visibility) {
