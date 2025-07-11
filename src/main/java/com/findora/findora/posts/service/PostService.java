@@ -1,5 +1,7 @@
 package com.findora.findora.posts.service;
 
+import com.findora.findora.categories.model.Category;
+import com.findora.findora.categories.repository.CategoryRepository;
 import com.findora.findora.posts.dto.PostRequestDto;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.model.Post;
@@ -14,35 +16,48 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostService {
 
     private final PostRepository postRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public Long createPost(PostRequestDto requestDto) {
-        Post post = requestDto.toEntity();
+        Category category = categoryRepository.findById(requestDto.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
+        Post post = requestDto.toEntity(category);
         return postRepository.save(post).getId();
     }
 
-    @Transactional(readOnly = true)
     public List<PostResponseDto> getAllPosts() {
         return postRepository.findAll().stream()
                 .map(PostResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public PostResponseDto getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
         return PostResponseDto.fromEntity(post);
     }
 
+    public List<PostResponseDto> getPostsByCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("카테고리에 게시글이 존재하지 않습니다."));
+
+        return postRepository.findByCategory(category).stream()
+                .map(PostResponseDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public void updatePost(Long id, PostRequestDto requestDto) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
-        post.update(requestDto.getTitle(), requestDto.getContent());
+        Category category = categoryRepository.findById(requestDto.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
+        post.update(requestDto.getTitle(), requestDto.getContent(),category);
     }
 
     @Transactional

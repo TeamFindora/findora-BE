@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +29,13 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "작성 성공",
                     content = @Content(schema = @Schema(implementation = PostResponseDto.class)))
     })
-    public ResponseEntity<Long> create(@RequestBody PostRequestDto dto) {
+    public ResponseEntity<Long> create(@Valid @RequestBody PostRequestDto dto) {
         return ResponseEntity.ok(postService.createPost(dto));
     }
 
     @GetMapping
     @Operation(summary = "전체 게시글 조회", responses = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @ApiResponse(responseCode = "200", description = "전체 게시글 조회 성공",
                     content = @Content(schema = @Schema(implementation = PostResponseDto.class)))
     })
     public ResponseEntity<List<PostResponseDto>> getAll() {
@@ -43,11 +44,19 @@ public class PostController {
 
     @GetMapping("/{id}")
     @Operation(summary = "게시글 ID로 조회", responses = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @ApiResponse(responseCode = "200", description = "게시글 ID로 조회 성공",
                     content = @Content(schema = @Schema(implementation = PostResponseDto.class)))
     })
     public ResponseEntity<PostResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(postService.getPost(id));
+    }
+
+    @Operation(summary = "카테고리(category_id)별 게시글 조회", description = "카테고리 ID로 게시글 조회 성공.")
+    @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = PostResponseDto.class)))
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<PostResponseDto>> getPostsByCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(postService.getPostsByCategory(categoryId));
     }
 
     @PutMapping("/{id}")
