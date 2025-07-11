@@ -76,6 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 // JWT 토큰 유효성 검증
                 if (jwtService.isTokenValid(jwt, userDetails)) {
+                    // principal에 CustomUserDetails가 들어가므로, Controller에서 @AuthenticationPrincipal CustomUserDetails user 사용 가능
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,

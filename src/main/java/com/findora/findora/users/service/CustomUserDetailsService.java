@@ -31,14 +31,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         log.debug("Found user: {}", user.getEmail());
 
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getLoginId())
-                .password(user.getPassword())
-                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(!user.isEmailVerified()) // 이메일 인증되지 않은 사용자는 비활성화
-                .build();
+        return new CustomUserDetails(user);
     }
 } 

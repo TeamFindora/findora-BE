@@ -6,7 +6,6 @@ import com.findora.findora.users.model.User;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,13 +22,9 @@ public class PostRequestDto {
     @NotBlank(message = "본문 내용을 입력하세요")
     private String content;
 
-    @Schema(description = "카테고리 ID", example = "1")
-    @NotNull(message = "카테고리 ID를 입력하세요.")
+    // categoryId는 게시글 생성시에만 사용, 수정 요청에는 필요 없음
+    @Schema(description = "카테고리 ID", example = "1", required = false)
     private Long categoryId;
-
-    @Schema(description = "작성자 ID", example = "1")
-    @NotNull(message = "작성자 ID를 입력하세요.")
-    private Long userId;
 
     public Post toEntity(Category category, User user) {
         return Post.builder()
