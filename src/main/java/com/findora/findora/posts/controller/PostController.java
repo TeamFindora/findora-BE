@@ -11,10 +11,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import com.findora.findora.posts.dto.PostRequestDto;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.service.PostService;
+import com.findora.findora.users.service.CustomUserDetails;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -56,14 +60,13 @@ public class PostController {
             schema = @Schema(implementation = PostRequestDto.class),
             examples = @ExampleObject(
                 name = "게시글 작성 예시",
-                                 value = """
-                 {
-                   "title": "Spring Boot 질문드립니다",
-                   "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 어떻게 해결하는지 알고 싶습니다.",
-                   "categoryId": 1,
-                   "userId": 1
-                 }
-                 """
+                value = """
+                {
+                  \"title\": \"Spring Boot 질문드립니다\",
+                  \"content\": \"Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 어떻게 해결하는지 알고 싶습니다.\",
+                  \"categoryId\": 1
+                }
+                """
             )
         )
     )
@@ -86,8 +89,8 @@ public class PostController {
                 examples = @ExampleObject(
                     value = """
                     {
-                      "error": "제목을 필수로 입력해주세요.",
-                      "timestamp": "2025-07-07T14:30:00"
+                      \"error\": \"제목을 필수로 입력해주세요.\",
+                      \"timestamp\": \"2025-07-07T14:30:00\"
                     }
                     """
                 )
@@ -102,8 +105,8 @@ public class PostController {
             description = "권한 부족 (해당 카테고리에 글 작성 권한 없음)"
         )
     })
-    public ResponseEntity<Long> create(@Valid @RequestBody PostRequestDto dto) {
-        return ResponseEntity.ok(postService.createPost(dto));
+    public ResponseEntity<Long> create(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody PostRequestDto dto) {
+        return ResponseEntity.ok(postService.createPost(dto, user.getId()));
     }
 
     @GetMapping
@@ -120,7 +123,7 @@ public class PostController {
                 schema = @Schema(implementation = PostResponseDto.class),
                 examples = @ExampleObject(
                     name = "게시글 목록 응답",
-                                         value = """
+                    value = """
                      [
                        {
                          "id": 15,
@@ -176,7 +179,7 @@ public class PostController {
                 schema = @Schema(implementation = PostResponseDto.class),
                 examples = @ExampleObject(
                     name = "게시글 상세 응답",
-                                         value = """
+                    value = """
                      {
                        "id": 15,
                        "category": {
@@ -232,7 +235,7 @@ public class PostController {
                 schema = @Schema(implementation = PostResponseDto.class),
                 examples = @ExampleObject(
                     name = "카테고리별 게시글 목록",
-                                         value = """
+                    value = """
                      [
                        {
                          "id": 15,
@@ -292,25 +295,23 @@ public class PostController {
     @PutMapping("/{id}")
     @Operation(
         summary = "게시글 수정", 
-        description = "기존 게시글의 내용을 수정합니다. 작성자 본인만 수정 가능합니다.",
+        description = "기존 게시글의 내용을 수정합니다. 작성자 본인만 수정 가능합니다. (카테고리는 수정 불가)",
         security = @SecurityRequirement(name = "Authorization")
     )
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
-        description = "수정할 게시글 정보",
+        description = "수정할 게시글 정보 (카테고리는 수정 불가, 제목/내용만 입력)",
         required = true,
         content = @Content(
             mediaType = "application/json",
             schema = @Schema(implementation = PostRequestDto.class),
             examples = @ExampleObject(
                 name = "게시글 수정 예시",
-                                 value = """
-                 {
-                   "title": "Spring Boot 질문드립니다 (수정됨)",
-                   "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 Fetch Join으로 해결할 수 있다는 답변을 받았습니다. 감사합니다!",
-                   "categoryId": 1,
-                   "userId": 1
-                 }
-                 """
+                value = """
+                {
+                  \"title\": \"Spring Boot 질문드립니다 (수정됨)\",
+                  \"content\": \"Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 Fetch Join으로 해결할 수 있다는 답변을 받았습니다. 감사합니다!\"
+                }
+                """
             )
         )
     )
@@ -337,18 +338,19 @@ public class PostController {
         )
     })
     public ResponseEntity<Void> update(
+        @AuthenticationPrincipal CustomUserDetails user,
         @Parameter(description = "수정할 게시글 ID", example = "15", required = true)
         @PathVariable Long id, 
         @RequestBody PostRequestDto dto
     ) {
-        postService.updatePost(id, dto);
+        postService.updatePost(id, dto, user.getId());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     @Operation(
         summary = "게시글 삭제", 
-        description = "게시글을 삭제합니다. 작성자 본인 또는 관리자만 삭제 가능합니다.",
+        description = "게시글을 삭제합니다. 작성자 본인만 삭제 가능합니다.",
         security = @SecurityRequirement(name = "Authorization")
     )
     @ApiResponses(value = {
@@ -362,7 +364,7 @@ public class PostController {
         ),
         @ApiResponse(
             responseCode = "403", 
-            description = "권한 부족 (작성자가 아니며 관리자도 아님)"
+            description = "권한 부족 (작성자가 아님)"
         ),
         @ApiResponse(
             responseCode = "404", 
@@ -370,10 +372,11 @@ public class PostController {
         )
     })
     public ResponseEntity<Void> delete(
+        @AuthenticationPrincipal CustomUserDetails user,
         @Parameter(description = "삭제할 게시글 ID", example = "15", required = true)
         @PathVariable Long id
     ) {
-        postService.deletePost(id);
+        postService.deletePost(id, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

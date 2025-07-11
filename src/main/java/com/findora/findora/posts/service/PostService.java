@@ -27,11 +27,11 @@ public class PostService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Long createPost(PostRequestDto requestDto) {
+    public Long createPost(PostRequestDto requestDto, Long userId) {
         Category category = categoryRepository.findById(requestDto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
         
-        User user = userRepository.findById(requestDto.getUserId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
         
         Post post = requestDto.toEntity(category, user);
@@ -60,16 +60,22 @@ public class PostService {
     }
 
     @Transactional
-    public void updatePost(Long id, PostRequestDto requestDto) {
+    public void updatePost(Long id, PostRequestDto requestDto, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
-        Category category = categoryRepository.findById(requestDto.getCategoryId())
-                .orElseThrow(() -> new IllegalArgumentException("카테고리가 없습니다."));
-        post.update(requestDto.getTitle(), requestDto.getContent(),category);
+        if (!post.getUser().getId().equals(userId)) {
+            throw new SecurityException("작성자만 수정할 수 있습니다.");
+        }
+        post.update(requestDto.getTitle(), requestDto.getContent(), post.getCategory());
     }
 
     @Transactional
-    public void deletePost(Long id) {
+    public void deletePost(Long id, Long userId) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
+        if (!post.getUser().getId().equals(userId)) {
+            throw new SecurityException("작성자만 삭제할 수 있습니다.");
+        }
         postRepository.deleteById(id);
     }
 }
