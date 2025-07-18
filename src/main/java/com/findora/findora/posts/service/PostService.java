@@ -46,9 +46,14 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public PostResponseDto getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
+        
+        // 조회수 증가
+        post.incrementViewCount();
+        
         return PostResponseDto.fromEntity(post);
     }
 
