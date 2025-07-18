@@ -39,11 +39,11 @@ public class UserController {
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService;
     
-    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 필수 약관 동의가 필요합니다.")
+    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 필수 약관 동의가 필요합니다.\n\nagreements는 반드시 배열(List) 형태로 보내야 하며, 예시는 아래와 같습니다.\n\n예시:\n[\n  {\"type\": \"SERVICE\", \"agreed\": true},\n  {\"type\": \"PRIVACY\", \"agreed\": true},\n  {\"type\": \"MARKETING\", \"agreed\": false}\n]\n약관이 1개뿐이어도 배열로 보내야 합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "사용자 등록 성공",
             content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"message\": \"사용자가 성공적으로 등록되었습니다.\", \"userId\": 1, \"loginId\": \"user123\", \"email\": \"user@example.com\", \"nickname\": \"사용자\"}"))),
+                examples = @ExampleObject(value = "{\"message\": \"사용자가 성공적으로 등록되었습니다.\", \"userId\": 1, \"loginId\": \"user123\", \"email\": \"user@example.com\", \"nickname\": \"홍길동\"}"))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 필수 약관 미동의",
             content = @Content(mediaType = "application/json",
                 examples = @ExampleObject(value = "{\"error\": \"필수 약관에 동의해야 합니다.\"}"))),
@@ -53,18 +53,18 @@ public class UserController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(
-            @Parameter(description = "사용자 등록 정보", required = true)
+            @Parameter(description = "사용자 등록 정보 (agreements는 반드시 배열(List)로 보내야 합니다)", required = true,
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = "{\n  \"loginId\": \"user123\",\n  \"password\": \"password123\",\n  \"nickname\": \"홍길동\",\n  \"email\": \"user@example.com\",\n  \"role\": \"USER\",\n  \"agreements\": [\n    {\"type\": \"SERVICE\", \"agreed\": true},\n    {\"type\": \"PRIVACY\", \"agreed\": true},\n    {\"type\": \"MARKETING\", \"agreed\": false}\n  ]\n}")))
             @RequestBody UserRegisterRequestDTO request) {
         try {
-             boolean allRequiredAgreed = request.getAgreements().stream()
-            .filter(a -> a.getType().equals("SERVICE") || a.getType().equals("PRIVACY"))
-            .allMatch(AgreementRequestDTO::isAgreed);
-
+            boolean allRequiredAgreed = request.getAgreements().stream()
+                .filter(a -> a.getType().equals("SERVICE") || a.getType().equals("PRIVACY"))
+                .allMatch(AgreementRequestDTO::isAgreed);
             if (!allRequiredAgreed) {
-                return ResponseEntity.badRequest().body(Map.of("error", "필수 약관에 동의해야 합니다."));
+                throw new IllegalArgumentException("필수 약관에 동의해야 합니다.");
             }
             User user = userService.registerUser(request);
-            
             return ResponseEntity.ok(Map.of(
                 "message", "사용자가 성공적으로 등록되었습니다.",
                 "userId", user.getId(),
@@ -72,42 +72,13 @@ public class UserController {
                 "email", user.getEmail(),
                 "nickname", user.getNickname()
             ));
-            
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "서버 오류가 발생했습니다."));
         }
     }
 
-    @Operation(summary = "사용자 로그인", description = "loginId와 password로 로그인합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "로그인 성공",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"userId\": 1, \"loginId\": \"user123\", \"nickname\": \"사용자\", \"role\": \"USER\"}"))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\": \"loginId와 password만 입력해야 합니다.\"}")))
-    })
-    @PostMapping("/login")
-    public ResponseEntity<?> login(
-            @Parameter(description = "로그인 정보", required = true,
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(value = "{\"loginId\": \"user123\", \"password\": \"password123\"}")))
-            @RequestBody Map<String, String> request) {
-        if (request.size() != 2 || !request.containsKey("loginId") || !request.containsKey("password")) {
-        return ResponseEntity.badRequest().body(Map.of("error", "loginId와 password만 입력해야 합니다."));
-    }
-        String loginId = request.get("loginId");
-        String password = request.get("password");
-        User user = userService.login(loginId, password);
-         return ResponseEntity.ok(Map.of(
-            "userId", user.getId(),
-            "loginId", user.getLoginId(),
-            "nickname", user.getNickname(),
-            "role", user.getRole().name()
-        ));
-    }
     
     @Operation(summary = "모든 사용자 조회", description = "등록된 모든 사용자 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "사용자 목록 조회 성공")
@@ -125,7 +96,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         return userService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -133,13 +104,17 @@ public class UserController {
     
     @Operation(summary = "이메일로 사용자 조회", description = "이메일 주소로 특정 사용자를 조회합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "사용자 조회 성공"),
-        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+        @ApiResponse(responseCode = "200", description = "사용자 조회 성공",
+            content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = "{\"id\": 1, \"loginId\": \"user123\", \"nickname\": \"홍길동\", \"email\": \"user@example.com\", \"role\": \"USER\", \"emailVerified\": true}"))),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+            content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = "{}")))
     })
     @GetMapping("/email/{email}")
     public ResponseEntity<?> getUserByEmail(
             @Parameter(description = "이메일 주소", required = true, example = "user@example.com")
-            @PathVariable String email) {
+            @PathVariable("email") String email) {
         return userService.findByEmail(email)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -151,8 +126,8 @@ public class UserController {
             examples = @ExampleObject(value = "{\"exists\": false}")))
     @GetMapping("/check-nickname")
     public ResponseEntity<?> checkNickname(
-            @Parameter(description = "확인할 닉네임", required = true, example = "사용자")
-            @RequestParam String nickname) {
+            @Parameter(description = "확인할 닉네임", required = true, example = "홍길동")
+            @RequestParam("nickname") String nickname) {
         boolean exists = userRepository.existsByNickname(nickname);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
@@ -164,47 +139,11 @@ public class UserController {
     @GetMapping("/check-loginid")
     public ResponseEntity<?> checkLoginId(
             @Parameter(description = "확인할 로그인 ID", required = true, example = "user123")
-            @RequestParam String loginId) {
+            @RequestParam("loginId") String loginId) {
         boolean exists = userRepository.existsByLoginId(loginId);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
-
-    @Operation(summary = "이메일 인증코드 발송", description = "이메일로 인증코드를 발송합니다.")
-    @ApiResponse(responseCode = "200", description = "인증코드 발송 성공",
-        content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{\"message\": \"이메일로 인증코드를 보냈습니다.\"}")))
-    @PostMapping("/send-email-code")
-    public ResponseEntity<?> sendEmailCode(
-            @Parameter(description = "이메일 주소", required = true,
-                content = @Content(mediaType = "application/json",
-                    examples = @ExampleObject(value = "{\"email\": \"user@example.com\"}")))
-            @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        emailVerificationService.sendCode(email);
-        return ResponseEntity.ok(Map.of("message", "이메일로 인증코드를 보냈습니다."));
-    }
-    
-    @Operation(summary = "이메일 인증", description = "사용자의 이메일을 인증합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "이메일 인증 성공",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"message\": \"이메일이 성공적으로 인증되었습니다.\"}"))),
-        @ApiResponse(responseCode = "400", description = "인증 실패",
-            content = @Content(mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\": \"인증에 실패했습니다.\"}")))
-    })
-    @PostMapping("/{id}/verify-email")
-    public ResponseEntity<?> verifyEmail(
-            @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id) {
-        try {
-            userService.verifyEmail(id);
-            return ResponseEntity.ok(Map.of("message", "이메일이 성공적으로 인증되었습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-    
+ 
     @Operation(summary = "비밀번호 변경", description = "사용자의 비밀번호를 변경합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공",
@@ -217,8 +156,10 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<?> changePassword(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id,
-            @Parameter(description = "새 비밀번호", required = true,
+            @PathVariable("id") Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "새 비밀번호",
+                required = true,
                 content = @Content(mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"newPassword\": \"newPassword123\"}")))
             @RequestBody Map<String, String> request) {
@@ -227,7 +168,7 @@ public class UserController {
             userService.changePassword(id, newPassword);
             return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         }
     }
     
@@ -243,8 +184,10 @@ public class UserController {
     @PutMapping("/{id}/nickname")
     public ResponseEntity<?> changeNickname(
             @Parameter(description = "사용자 ID", required = true, example = "1")
-            @PathVariable Long id,
-            @Parameter(description = "새 닉네임", required = true,
+            @PathVariable("id") Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "새 닉네임",
+                required = true,
                 content = @Content(mediaType = "application/json",
                     examples = @ExampleObject(value = "{\"newNickname\": \"새닉네임\"}")))
             @RequestBody Map<String, String> request) {
@@ -253,7 +196,7 @@ public class UserController {
             userService.changeNickname(id, newNickname);
             return ResponseEntity.ok(Map.of("message", "닉네임이 성공적으로 변경되었습니다."));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         }
     }
     
