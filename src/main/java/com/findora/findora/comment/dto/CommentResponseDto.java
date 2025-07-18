@@ -39,10 +39,10 @@ public class CommentResponseDto {
                 .id(comment.getId())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .postId(comment.getPost().getId()) //post에서 ID를 가져옴
-                .content(comment.getIsDeleted() ? "(삭제된 댓글입니다)" : comment.getContent())
+                .content(comment.isDeleted() ? "(삭제된 댓글입니다)" : comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .isDeleted(comment.getIsDeleted())
+                .isDeleted(comment.isDeleted())
                 .build();
     }
 }

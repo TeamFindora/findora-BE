@@ -3,6 +3,10 @@ package com.findora.findora.users.model;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
+import com.findora.findora.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "users",
@@ -25,15 +30,13 @@ import lombok.NoArgsConstructor;
          @UniqueConstraint(name = "uk_users_email",    columnNames = "email"),
          @UniqueConstraint(name = "uk_users_nickname", columnNames = "nickname")
        })
+@SQLDelete(sql = "UPDATE users SET deleted = true, updated_at = NOW() WHERE id = ?")
+@Where(clause = "deleted = false")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@SuperBuilder
+public class User extends BaseEntity {
 
     @Column(name = "login_id", nullable = false, length = 50)
     private String loginId;
@@ -50,10 +53,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Role role;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;

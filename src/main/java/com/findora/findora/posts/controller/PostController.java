@@ -409,6 +409,6 @@ public class PostController {
         @Parameter(description = "삭제할 게시글 ID", example = "15", required = true)
         @PathVariable Long id
     ) {
-        return ResponseEntity.ok(postService.deletePost(id, user.getId()));
+        return ResponseEntity.ok(postService.softDeletePost(id, user.getId()));
     }
 }
