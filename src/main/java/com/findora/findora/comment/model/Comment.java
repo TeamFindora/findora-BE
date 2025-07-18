@@ -1,5 +1,6 @@
 package com.findora.findora.comment.model;
 
+import com.findora.findora.users.model.User;
 import com.findora.findora.posts.model.Post;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,10 +18,9 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* user_id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;*/
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
