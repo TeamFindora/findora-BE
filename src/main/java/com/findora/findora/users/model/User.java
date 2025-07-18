@@ -59,7 +59,7 @@ public class User {
     private boolean emailVerified;
 
     public enum Role {
-        STUDENT, PI, ADMIN
+        USER, STUDENT, PI, ADMIN
     }
 
     // 편의 메서드 예시
