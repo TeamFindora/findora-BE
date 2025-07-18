@@ -77,10 +77,10 @@ public class CommentController {
     @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다. 본인이 작성한 댓글만 삭제 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (댓글이 해당 게시글에 속하지 않음)"),
             @ApiResponse(responseCode = "401", description = "인증 필요"),
             @ApiResponse(responseCode = "403", description = "권한 없음 (본인 댓글이 아님)"),
-            @ApiResponse(responseCode = "404", description = "댓글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글 또는 댓글을 찾을 수 없음 (존재하지 않거나 이미 삭제됨)")
     })
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "Authorization")
