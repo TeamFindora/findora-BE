@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.*;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,15 +35,15 @@ public class CommentService {
     @Transactional
     public SuccessResponse createComment(Long postId, Long userId, CommentRequestDto dto) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + postId));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다. id=" + userId));
+                .orElseThrow(() -> new EntityNotFoundException("사용자가 존재하지 않습니다. id=" + userId));
 
         Comment parent = null;
         if (dto.getParentId() != null) {
             parent = commentRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다. id=" + dto.getParentId()));
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글이 존재하지 않습니다. id=" + dto.getParentId()));
         }
 
         Comment comment = Comment.builder()
@@ -83,11 +84,11 @@ public class CommentService {
     public SuccessResponse updateComment(Long postId, Long commentId, Long userId, CommentUpdateRequestDto dto) {
         // 게시글 존재 여부 확인
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + postId));
         
         Comment comment = commentRepository.findById(commentId)
                 .filter(c -> !c.getIsDeleted()) //삭제 상태인 댓글
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + commentId));
+                .orElseThrow(() -> new EntityNotFoundException("댓글이 존재하지 않습니다. id=" + commentId));
         
         // 댓글이 해당 게시글에 속하는지 확인
         if (!comment.getPost().getId().equals(postId)) {
@@ -109,14 +110,14 @@ public class CommentService {
     public SuccessResponse deleteComment(Long postId, Long commentId, Long userId) {
         // 게시글 존재 여부 확인
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + postId));
         
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + commentId));
+                .orElseThrow(() -> new EntityNotFoundException("댓글이 존재하지 않습니다. id=" + commentId));
 
         // 이미 삭제된 댓글인지 확인
         if (comment.getIsDeleted()) {
-            throw new IllegalArgumentException("이미 삭제된 댓글입니다. id=" + commentId);
+            throw new EntityNotFoundException("이미 삭제된 댓글입니다. id=" + commentId);
         }
 
         // 댓글이 해당 게시글에 속하는지 확인
