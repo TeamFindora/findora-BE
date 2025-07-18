@@ -3,6 +3,7 @@ package com.findora.findora.posts.model;
 import java.time.LocalDateTime;
 
 import com.findora.findora.categories.model.Category;
+import com.findora.findora.common.BaseEntity;
 import com.findora.findora.users.model.User;
 
 import jakarta.persistence.Column;
@@ -21,18 +22,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "posts")
+@SQLDelete(sql = "UPDATE posts SET deleted = true, updated_at = NOW() WHERE id = ?")
+@Where(clause = "deleted = false")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
-
-public class Post {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@SuperBuilder
+public class Post extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
@@ -52,23 +54,11 @@ public class Post {
     @Builder.Default
     private Long viewCount = 0L;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
         if (this.viewCount == null) {
             this.viewCount = 0L;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void update(String title, String content, Category category) {
