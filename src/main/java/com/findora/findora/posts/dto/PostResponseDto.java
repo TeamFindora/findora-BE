@@ -34,6 +34,9 @@ public class PostResponseDto {
     @Schema(description = "본문")
     private String content;
 
+    @Schema(description = "조회수")
+    private Long viewCount;
+
     @Schema(description = "작성일자")
     private LocalDateTime createdAt;
 
@@ -46,6 +49,7 @@ public class PostResponseDto {
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
+                .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .category(CategoryResponseDto.fromEntity(post.getCategory()))

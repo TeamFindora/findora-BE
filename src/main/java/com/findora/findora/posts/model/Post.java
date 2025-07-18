@@ -48,6 +48,10 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -57,6 +61,9 @@ public class Post {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
     }
 
     @PreUpdate
@@ -68,5 +75,9 @@ public class Post {
         this.title = title;
         this.content = content;
         this.category = category;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 }
