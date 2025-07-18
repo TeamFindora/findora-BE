@@ -3,6 +3,7 @@ package com.findora.findora.comment.controller;
 import com.findora.findora.comment.dto.CommentRequestDto;
 import com.findora.findora.comment.dto.CommentResponseDto;
 import com.findora.findora.comment.service.CommentService;
+import com.findora.findora.common.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,9 +30,9 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "게시글 또는 부모 댓글 찾을 수 없음")
     })
     @PostMapping
-    public ResponseEntity<Long> createComment(@PathVariable Long postId,@Valid @RequestBody CommentRequestDto dto) {
+    public ResponseEntity<SuccessResponse> createComment(@PathVariable Long postId,@Valid @RequestBody CommentRequestDto dto) {
         //dto.setPostId(postId);
-        return ResponseEntity.ok(commentService.createComment(dto));
+        return ResponseEntity.ok(commentService.createComment(postId, dto));
     }
 
     @Operation(summary = "게시글 댓글 목록 조회", description = "게시글에 달린 모든 댓글을 조회합니다."

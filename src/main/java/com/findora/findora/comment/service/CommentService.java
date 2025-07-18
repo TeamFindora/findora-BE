@@ -4,6 +4,7 @@ import com.findora.findora.comment.dto.CommentRequestDto;
 import com.findora.findora.comment.dto.CommentResponseDto;
 import com.findora.findora.comment.model.Comment;
 import com.findora.findora.comment.repository.CommentRepository;
+import com.findora.findora.common.SuccessResponse;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.model.Post;
 import com.findora.findora.posts.repository.PostRepository;
@@ -26,9 +27,9 @@ public class CommentService {
 
     //댓글 등록
     @Transactional
-    public Long createComment(CommentRequestDto dto) {
-        Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + dto.getPostId()));
+    public SuccessResponse createComment(Long postId, CommentRequestDto dto) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
 
         Comment parent = null;
         if (dto.getParentId() != null) {
@@ -43,7 +44,9 @@ public class CommentService {
                 .isDeleted(false)
                 .build();
 
-        return commentRepository.save(comment).getId();
+        commentRepository.save(comment);
+        
+        return SuccessResponse.of("댓글이 성공적으로 등록되었습니다.");
     }
 
     //게시글 ID로 댓글 조회(논리 삭제된 댓글 제외)
