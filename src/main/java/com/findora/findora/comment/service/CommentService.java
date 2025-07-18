@@ -1,12 +1,16 @@
 package com.findora.findora.comment.service;
 
 import com.findora.findora.comment.dto.CommentRequestDto;
+import com.findora.findora.comment.dto.CommentUpdateRequestDto;
 import com.findora.findora.comment.dto.CommentResponseDto;
 import com.findora.findora.comment.model.Comment;
 import com.findora.findora.comment.repository.CommentRepository;
+import com.findora.findora.common.SuccessResponse;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.posts.model.Post;
 import com.findora.findora.posts.repository.PostRepository;
+import com.findora.findora.users.model.User;
+import com.findora.findora.users.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.*;
 import org.springframework.stereotype.Service;
@@ -16,19 +20,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
 
     //댓글 등록
     @Transactional
-    public Long createComment(CommentRequestDto dto) {
-        Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + dto.getPostId()));
+    public SuccessResponse createComment(Long postId, Long userId, CommentRequestDto dto) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다. id=" + userId));
 
         Comment parent = null;
         if (dto.getParentId() != null) {
@@ -38,12 +47,15 @@ public class CommentService {
 
         Comment comment = Comment.builder()
                 .post(post)
+                .user(user)
                 .parent(parent)
                 .content(dto.getContent())
                 .isDeleted(false)
                 .build();
 
-        return commentRepository.save(comment).getId();
+        commentRepository.save(comment);
+        
+        return SuccessResponse.of("댓글이 성공적으로 등록되었습니다.");
     }
 
     //게시글 ID로 댓글 조회(논리 삭제된 댓글 제외)
@@ -68,25 +80,58 @@ public class CommentService {
 
     //댓글 수정
     @Transactional
-    public void updateComment(Long id, String newContent) {
-        Comment comment = commentRepository.findById(id)
+    public SuccessResponse updateComment(Long postId, Long commentId, Long userId, CommentUpdateRequestDto dto) {
+        // 게시글 존재 여부 확인
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+        
+        Comment comment = commentRepository.findById(commentId)
                 .filter(c -> !c.getIsDeleted()) //삭제 상태인 댓글
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + id));
-        comment.updateContent(newContent);
+                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + commentId));
+        
+        // 댓글이 해당 게시글에 속하는지 확인
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new IllegalArgumentException("해당 게시글에 속하지 않는 댓글입니다.");
+        }
+        
+        // 댓글 작성자와 현재 사용자가 같은지 확인
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new SecurityException("본인이 작성한 댓글만 수정할 수 있습니다.");
+        }
+        
+        comment.updateContent(dto.getContent());
+        
+        return SuccessResponse.of("댓글이 성공적으로 수정되었습니다.");
     }
 
     //댓글 삭제상태로 변경
     @Transactional
-    public void deleteComment(Long id) {
-        Comment comment = commentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + id));
+    public SuccessResponse deleteComment(Long postId, Long commentId, Long userId) {
+        // 게시글 존재 여부 확인
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다. id=" + postId));
+        
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다. id=" + commentId));
 
         // 이미 삭제된 댓글인지 확인
         if (comment.getIsDeleted()) {
-            throw new IllegalArgumentException("이미 삭제된 댓글입니다. id=" + id);
+            throw new IllegalArgumentException("이미 삭제된 댓글입니다. id=" + commentId);
+        }
+
+        // 댓글이 해당 게시글에 속하는지 확인
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new IllegalArgumentException("해당 게시글에 속하지 않는 댓글입니다.");
+        }
+
+        // 댓글 작성자와 현재 사용자가 같은지 확인
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new SecurityException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
         comment.markAsDeleted(); // 삭제상태로 변경(실제 삭제 X)
+        
+        return SuccessResponse.of("댓글이 성공적으로 삭제되었습니다.");
     }
 
     //전체 댓글 조회(controller 수정중)
