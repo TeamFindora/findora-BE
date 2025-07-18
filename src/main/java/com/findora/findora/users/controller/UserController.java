@@ -39,7 +39,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService;
     
-    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 필수 약관 동의가 필요합니다.")
+    @Operation(summary = "사용자 등록", description = "새로운 사용자를 등록합니다. 필수 약관 동의가 필요합니다.\n\nagreements는 반드시 배열(List) 형태로 보내야 하며, 예시는 아래와 같습니다.\n\n예시:\n[\n  {\"type\": \"SERVICE\", \"agreed\": true},\n  {\"type\": \"PRIVACY\", \"agreed\": true},\n  {\"type\": \"MARKETING\", \"agreed\": false}\n]\n약관이 1개뿐이어도 배열로 보내야 합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "사용자 등록 성공",
             content = @Content(mediaType = "application/json",
@@ -53,20 +53,18 @@ public class UserController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(
-            @Parameter(description = "사용자 등록 정보", required = true,
+            @Parameter(description = "사용자 등록 정보 (agreements는 반드시 배열(List)로 보내야 합니다)", required = true,
                 content = @Content(mediaType = "application/json",
                     examples = @ExampleObject(value = "{\n  \"loginId\": \"user123\",\n  \"password\": \"password123\",\n  \"nickname\": \"홍길동\",\n  \"email\": \"user@example.com\",\n  \"role\": \"USER\",\n  \"agreements\": [\n    {\"type\": \"SERVICE\", \"agreed\": true},\n    {\"type\": \"PRIVACY\", \"agreed\": true},\n    {\"type\": \"MARKETING\", \"agreed\": false}\n  ]\n}")))
             @RequestBody UserRegisterRequestDTO request) {
         try {
-             boolean allRequiredAgreed = request.getAgreements().stream()
-            .filter(a -> a.getType().equals("SERVICE") || a.getType().equals("PRIVACY"))
-            .allMatch(AgreementRequestDTO::isAgreed);
-
+            boolean allRequiredAgreed = request.getAgreements().stream()
+                .filter(a -> a.getType().equals("SERVICE") || a.getType().equals("PRIVACY"))
+                .allMatch(AgreementRequestDTO::isAgreed);
             if (!allRequiredAgreed) {
-                return ResponseEntity.badRequest().body(Map.of("error", "필수 약관에 동의해야 합니다."));
+                throw new IllegalArgumentException("필수 약관에 동의해야 합니다.");
             }
             User user = userService.registerUser(request);
-            
             return ResponseEntity.ok(Map.of(
                 "message", "사용자가 성공적으로 등록되었습니다.",
                 "userId", user.getId(),
@@ -74,9 +72,8 @@ public class UserController {
                 "email", user.getEmail(),
                 "nickname", user.getNickname()
             ));
-            
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "서버 오류가 발생했습니다."));
         }
@@ -171,7 +168,7 @@ public class UserController {
             userService.changePassword(id, newPassword);
             return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         }
     }
     
@@ -199,7 +196,7 @@ public class UserController {
             userService.changeNickname(id, newNickname);
             return ResponseEntity.ok(Map.of("message", "닉네임이 성공적으로 변경되었습니다."));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw e;
         }
     }
     

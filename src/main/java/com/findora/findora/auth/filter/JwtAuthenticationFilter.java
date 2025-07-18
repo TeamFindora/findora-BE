@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.contains("/verify-email") ||
                path.startsWith("/api/email/") ||
                path.startsWith("/swagger-ui/") ||
+               path.startsWith("/v3/api-docs") ||
                path.startsWith("/v3/api-docs/") ||
                path.equals("/swagger-ui.html") ||
                path.startsWith("/webjars/") ||
@@ -76,6 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 // JWT 토큰 유효성 검증
                 if (jwtService.isTokenValid(jwt, userDetails)) {
+                    // principal에 CustomUserDetails가 들어가므로, Controller에서 @AuthenticationPrincipal CustomUserDetails user 사용 가능
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
