@@ -4,21 +4,43 @@ import java.util.List;
 
 import com.findora.findora.agreement.dto.AgreementRequestDTO;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 
-@Getter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRegisterRequestDTO {
-    @Schema(example = "user123")
+    @Schema(description = "로그인 ID", example = "user123")
     private String loginId;
-    @Schema(example = "password123")
+    
+    @Schema(description = "비밀번호", example = "password123")
     private String password;
-    @Schema(example = "홍길동")
+    
+    @Schema(description = "닉네임", example = "홍길동")
     private String nickname;
-    @Schema(example = "user@example.com")
+    
+    @Schema(description = "이메일", example = "user@example.com")
     private String email;
-    @Schema(example = "USER")
+    
+    @Schema(description = "사용자 역할", example = "USER")
     private String role;
-    @Schema(description = "약관 동의 목록", implementation = AgreementRequestDTO.class)
-    private List<AgreementRequestDTO> agreements; // 이미 정의된 AgreementDto 사용
+    
+    @ArraySchema(
+        schema = @Schema(implementation = AgreementRequestDTO.class),
+        arraySchema = @Schema(
+            description = "약관 동의 목록 (배열 형태로 전달해야 함)",
+            example = """
+            [
+              {"type": "SERVICE", "agreed": true},
+              {"type": "PRIVACY", "agreed": true},
+              {"type": "MARKETING", "agreed": false}
+            ]
+            """
+        )
+    )
+    private List<AgreementRequestDTO> agreements;
 }
