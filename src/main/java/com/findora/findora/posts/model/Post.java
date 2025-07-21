@@ -43,7 +43,7 @@ public class Post extends BaseEntity {
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
     @NotFound(action = NotFoundAction.IGNORE)
     private User user;
 
