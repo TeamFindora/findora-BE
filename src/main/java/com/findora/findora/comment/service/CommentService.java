@@ -138,4 +138,16 @@ public class CommentService {
                 .map(CommentResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    //게시글 ID로 모든 댓글 소프트 삭제 (게시글 삭제 시 사용)
+    @Transactional
+    public void deleteAllCommentsByPostId(Long postId) {
+        // 해당 게시글의 모든 댓글 조회 (삭제되지 않은 댓글만)
+        List<Comment> comments = commentRepository.findByPostIdAndDeletedFalse(postId);
+        
+        // 모든 댓글을 소프트 삭제
+        for (Comment comment : comments) {
+            comment.markAsDeleted();
+        }
+    }
 }
