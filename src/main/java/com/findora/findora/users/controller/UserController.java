@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.findora.findora.agreement.dto.AgreementRequestDTO;
+import com.findora.findora.common.SuccessResponse;
 import com.findora.findora.emailverification.service.EmailVerificationService;
 import com.findora.findora.users.dto.UserRegisterRequestDTO;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
+import com.findora.findora.users.service.CustomUserDetails;
 import com.findora.findora.users.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +30,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -200,5 +205,18 @@ public class UserController {
         }
     }
     
-    
+    @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 계정을 삭제합니다. (소프트 삭제)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공",
+            content = @Content(mediaType = "application/json",
+                examples = @ExampleObject(value = "{\"message\": \"사용자가 성공적으로 삭제되었습니다.\"}"))),
+        @ApiResponse(responseCode = "401", description = "인증 필요"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    @DeleteMapping("/me")
+    @SecurityRequirement(name = "Authorization")
+    public ResponseEntity<SuccessResponse> deleteMyAccount(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(userService.softDeleteUser(user.getId()));
+    }
 } 
