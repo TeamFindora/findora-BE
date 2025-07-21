@@ -199,6 +199,7 @@ public class PostController {
                        "userNickname": "김학생",
                        "title": "Spring Boot 질문드립니다",
                        "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 어떻게 해결하는지 알고 싶습니다.",
+                       "viewCount": 10,
                        "createdAt": "2025-07-07T14:30:00",
                        "updatedAt": "2025-07-07T14:30:00"
                      }
@@ -408,6 +409,6 @@ public class PostController {
         @Parameter(description = "삭제할 게시글 ID", example = "15", required = true)
         @PathVariable Long id
     ) {
-        return ResponseEntity.ok(postService.deletePost(id, user.getId()));
+        return ResponseEntity.ok(postService.softDeletePost(id, user.getId()));
     }
 }

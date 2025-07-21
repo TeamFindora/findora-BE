@@ -15,6 +15,7 @@ import com.findora.findora.posts.repository.PostRepository;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
 import com.findora.findora.common.SuccessResponse;
+import com.findora.findora.comment.service.CommentService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +27,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final CommentService commentService;
 
     @Transactional
     public SuccessResponse createPost(PostRequestDto requestDto, Long userId) {
@@ -46,9 +48,14 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public PostResponseDto getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
+        
+        // 조회수 증가
+        post.incrementViewCount();
+        
         return PostResponseDto.fromEntity(post);
     }
 
@@ -73,13 +80,18 @@ public class PostService {
     }
 
     @Transactional
-    public SuccessResponse deletePost(Long id, Long userId) {
+    public SuccessResponse softDeletePost(Long id, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
         if (!post.getUser().getId().equals(userId)) {
             throw new SecurityException("작성자만 삭제할 수 있습니다.");
         }
-        postRepository.deleteById(id);
+        
+        // 관련 댓글들을 먼저 삭제
+        commentService.deleteAllCommentsByPostId(id);
+        
+        // 게시글 삭제
+        postRepository.delete(post);
         return SuccessResponse.of("게시글 삭제 성공하였습니다.");
     }
 }
