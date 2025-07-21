@@ -49,9 +49,15 @@ public class PostResponseDto {
         Long userId = null;
         String userNickname = "탈퇴한 사용자";
         
-        if (post.getUser() != null && !post.getUser().isDeleted()) {
-            userId = post.getUser().getId();
-            userNickname = post.getUser().getNickname();
+        try {
+            if (post.getUser() != null && !post.getUser().isDeleted()) {
+                userId = post.getUser().getId();
+                userNickname = post.getUser().getNickname();
+            }
+        } catch (Exception e) {
+            // User 로딩 실패 시 기본값 유지
+            userId = null;
+            userNickname = "탈퇴한 사용자";
         }
         
         return PostResponseDto.builder()
