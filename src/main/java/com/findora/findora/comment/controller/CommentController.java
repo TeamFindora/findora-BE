@@ -3,6 +3,7 @@ package com.findora.findora.comment.controller;
 import com.findora.findora.comment.dto.CommentRequestDto;
 import com.findora.findora.comment.dto.CommentUpdateRequestDto;
 import com.findora.findora.comment.dto.CommentResponseDto;
+
 import com.findora.findora.comment.service.CommentService;
 import com.findora.findora.common.SuccessResponse;
 import com.findora.findora.users.service.CustomUserDetails;
@@ -43,18 +44,18 @@ public class CommentController {
         return ResponseEntity.ok(commentService.createComment(postId, user.getId(), dto));
     }
 
-    @Operation(summary = "게시글 댓글 목록 조회", description = "게시글에 달린 모든 댓글을 조회합니다."
+    @Operation(summary = "게시글 댓글 목록 조회", description = "게시글에 달린 모든 댓글을 조회합니다. 댓글이 없으면 안내 메시지를 반환합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "댓글 조회 성공")
+            @ApiResponse(responseCode = "200", description = "댓글 조회 성공 또는 댓글 없음")
     })
     @GetMapping
-    public ResponseEntity<List<CommentResponseDto>> getCommentsByPost(@PathVariable Long postId) {
+    public ResponseEntity<Object> getCommentsByPost(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
     }
 
 
-    @Operation(summary = "댓글 수정", description = "기존 댓글의 내용을 수정합니다. 본인이 작성한 댓글만 수정 가능합니다.")
+    @Operation(summary = "댓글 수정", description = "기존 댓아글의 내용을 수정합니다. 본인이 작성한 댓글만 수정 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "댓글 수정 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),

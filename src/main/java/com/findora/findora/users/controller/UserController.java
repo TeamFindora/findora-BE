@@ -125,7 +125,7 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "닉네임 중복 확인", description = "닉네임의 중복 여부를 확인합니다.")
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임의 중복 여부를 확인합니다. (탈퇴한 계정 포함)")
     @ApiResponse(responseCode = "200", description = "중복 확인 완료",
         content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = "{\"exists\": false}")))
@@ -133,11 +133,11 @@ public class UserController {
     public ResponseEntity<?> checkNickname(
             @Parameter(description = "확인할 닉네임", required = true, example = "홍길동")
             @RequestParam("nickname") String nickname) {
-        boolean exists = userRepository.existsByNickname(nickname);
+        boolean exists = userService.isNicknameUsedIncludingDeleted(nickname);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
 
-    @Operation(summary = "아이디 중복 확인", description = "로그인 ID의 중복 여부를 확인합니다.")
+    @Operation(summary = "아이디 중복 확인", description = "로그인 ID의 중복 여부를 확인합니다. (탈퇴한 계정 포함)")
     @ApiResponse(responseCode = "200", description = "중복 확인 완료",
         content = @Content(mediaType = "application/json",
             examples = @ExampleObject(value = "{\"exists\": false}")))
@@ -145,7 +145,7 @@ public class UserController {
     public ResponseEntity<?> checkLoginId(
             @Parameter(description = "확인할 로그인 ID", required = true, example = "user123")
             @RequestParam("loginId") String loginId) {
-        boolean exists = userRepository.existsByLoginId(loginId);
+        boolean exists = userService.isLoginIdUsedIncludingDeleted(loginId);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
  

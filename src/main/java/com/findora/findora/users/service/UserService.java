@@ -36,17 +36,17 @@ public class UserService {
     // 사용자 등록
     @Transactional
     public User registerUser(UserRegisterRequestDTO userRegisterRequestDTO) {
-        // 중복 검사
-        if (userRepository.existsByEmail(userRegisterRequestDTO.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+        // 중복 검사 (탈퇴한 사용자 포함)
+        if (isEmailUsedIncludingDeleted(userRegisterRequestDTO.getEmail())) {
+            throw new IllegalArgumentException("이미 사용된 이메일입니다. (탈퇴한 계정 포함)");
         }
         
-        if (userRepository.existsByNickname(userRegisterRequestDTO.getNickname())) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+        if (isNicknameUsedIncludingDeleted(userRegisterRequestDTO.getNickname())) {
+            throw new IllegalArgumentException("이미 사용된 닉네임입니다. (탈퇴한 계정 포함)");
         }
         
-        if (userRepository.existsByLoginId(userRegisterRequestDTO.getLoginId())) {
-            throw new IllegalArgumentException("이미 존재하는 로그인 ID입니다.");
+        if (isLoginIdUsedIncludingDeleted(userRegisterRequestDTO.getLoginId())) {
+            throw new IllegalArgumentException("이미 사용된 로그인 ID입니다. (탈퇴한 계정 포함)");
         }
         
         if (!emailVerificationService.isVerified(userRegisterRequestDTO.getEmail())) {
@@ -115,8 +115,8 @@ public class UserService {
     // 닉네임 변경
     @Transactional
     public void changeNickname(Long userId, String newNickname) {
-        if (userRepository.existsByNickname(newNickname)) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+        if (isNicknameUsedIncludingDeleted(newNickname)) {
+            throw new IllegalArgumentException("이미 사용된 닉네임입니다. (탈퇴한 계정 포함)");
         }
         
         User user = userRepository.findById(userId)
@@ -132,6 +132,23 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         return user;
+    }
+    
+    // === 삭제된 사용자까지 포함하는 중복 확인 메서드들 ===
+    
+    // 닉네임 중복 확인 (탈퇴한 사용자 포함)
+    public boolean isNicknameUsedIncludingDeleted(String nickname) {
+        return userRepository.countByNicknameIncludingDeleted(nickname) > 0;
+    }
+    
+    // 이메일 중복 확인 (탈퇴한 사용자 포함)
+    public boolean isEmailUsedIncludingDeleted(String email) {
+        return userRepository.countByEmailIncludingDeleted(email) > 0;
+    }
+    
+    // 로그인ID 중복 확인 (탈퇴한 사용자 포함)
+    public boolean isLoginIdUsedIncludingDeleted(String loginId) {
+        return userRepository.countByLoginIdIncludingDeleted(loginId) > 0;
     }
     
     // 소프트 삭제 (JPA delete 메서드 사용)
