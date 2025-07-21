@@ -60,13 +60,19 @@ public class CommentService {
 
     //게시글 ID로 댓글 조회(삭제된 댓글도 포함, 삭제된 댓글은 내용을 "삭제된 댓글입니다"로 표시)
     @Transactional(readOnly = true)
-    public List<CommentResponseDto> getCommentsByPostId(Long postId) {
+    public Object getCommentsByPostId(Long postId) {
         // 삭제된 댓글도 포함해서 조회 (네이티브 쿼리로 @Where 어노테이션 무시)
         List<Comment> comments = commentRepository.findByPostIdIncludingDeleted(postId);
 
-        return comments.stream()
+        List<CommentResponseDto> commentDtos = comments.stream()
                 .map(CommentResponseDto::fromEntity)
                 .collect(Collectors.toList());
+                
+        if (commentDtos.isEmpty()) {
+            return SuccessResponse.of("댓글이 없습니다");
+        } else {
+            return commentDtos;
+        }
     }
 
     /*대댓글 조회
