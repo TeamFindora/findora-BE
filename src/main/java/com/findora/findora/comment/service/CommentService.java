@@ -51,7 +51,6 @@ public class CommentService {
                 .user(user)
                 .parent(parent)
                 .content(dto.getContent())
-                .isDeleted(false)
                 .build();
 
         commentRepository.save(comment);
@@ -59,10 +58,11 @@ public class CommentService {
         return SuccessResponse.of("댓글이 성공적으로 등록되었습니다.");
     }
 
-    //게시글 ID로 댓글 조회(논리 삭제된 댓글 제외)
+    //게시글 ID로 댓글 조회(삭제된 댓글도 포함, 삭제된 댓글은 내용을 "삭제된 댓글입니다"로 표시)
     @Transactional(readOnly = true)
     public List<CommentResponseDto> getCommentsByPostId(Long postId) {
-        List<Comment> comments = commentRepository.findByPostIdAndIsDeletedFalse(postId);
+        // 삭제된 댓글도 포함해서 조회 (네이티브 쿼리로 @Where 어노테이션 무시)
+        List<Comment> comments = commentRepository.findByPostIdIncludingDeleted(postId);
 
         return comments.stream()
                 .map(CommentResponseDto::fromEntity)
@@ -86,8 +86,8 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + postId));
         
+        // @Where 어노테이션으로 자동 필터링되므로 isDeleted() 체크 불필요
         Comment comment = commentRepository.findById(commentId)
-                .filter(c -> !c.getIsDeleted()) //삭제 상태인 댓글
                 .orElseThrow(() -> new EntityNotFoundException("댓글이 존재하지 않습니다. id=" + commentId));
         
         // 댓글이 해당 게시글에 속하는지 확인
@@ -112,13 +112,9 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다. id=" + postId));
         
+        // @Where 어노테이션으로 자동 필터링되므로 isDeleted() 체크 불필요
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글이 존재하지 않습니다. id=" + commentId));
-
-        // 이미 삭제된 댓글인지 확인
-        if (comment.getIsDeleted()) {
-            throw new EntityNotFoundException("이미 삭제된 댓글입니다. id=" + commentId);
-        }
 
         // 댓글이 해당 게시글에 속하는지 확인
         if (!comment.getPost().getId().equals(postId)) {

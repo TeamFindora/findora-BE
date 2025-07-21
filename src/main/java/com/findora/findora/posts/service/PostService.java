@@ -78,13 +78,13 @@ public class PostService {
     }
 
     @Transactional
-    public SuccessResponse deletePost(Long id, Long userId) {
+    public SuccessResponse softDeletePost(Long id, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 없습니다: " + id));
         if (!post.getUser().getId().equals(userId)) {
             throw new SecurityException("작성자만 삭제할 수 있습니다.");
         }
-        postRepository.deleteById(id);
+        postRepository.delete(post);
         return SuccessResponse.of("게시글 삭제 성공하였습니다.");
     }
 }
