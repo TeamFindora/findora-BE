@@ -3,6 +3,7 @@ package com.findora.findora.likes.service;
 import com.findora.findora.comment.model.Comment;
 import com.findora.findora.comment.repository.CommentRepository;
 import com.findora.findora.likes.dto.LikeResponseDto;
+import com.findora.findora.common.SuccessResponse;
 import com.findora.findora.likes.model.Like;
 import com.findora.findora.likes.repository.LikeRepository;
 import com.findora.findora.posts.model.Post;
@@ -25,7 +26,7 @@ public class LikeService {
     private final CommentRepository commentRepository;
 
     @Transactional
-    public LikeResponseDto togglePostLike(Long userId, Long postId) {
+    public SuccessResponse togglePostLike(Long userId, Long postId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
         Post post = postRepository.findById(postId)
@@ -33,10 +34,12 @@ public class LikeService {
 
         Optional<Like> existingLike = likeRepository.findByUserIdAndPostId(userId, postId);
         boolean liked;
+        String message;
 
         if (existingLike.isPresent()) {
             likeRepository.delete(existingLike.get());
             liked = false;
+            message = "게시글 좋아요가 취소되었습니다.";
         } else {
             Like like = Like.builder()
                     .user(user)
@@ -44,17 +47,16 @@ public class LikeService {
                     .build();
             likeRepository.save(like);
             liked = true;
+            message = "게시글 좋아요가 추가되었습니다.";
         }
 
         long likeCount = likeRepository.countByPostId(postId);
-        return LikeResponseDto.builder()
-                .likeCount(likeCount)
-                .liked(liked)
-                .build();
+        return SuccessResponse.of(message);
     }
 
     @Transactional
-    public LikeResponseDto toggleCommentLike(Long userId, Long commentId) {
+    public SuccessResponse toggleCommentLike(Long userId, Long commentId) {
+       
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
         Comment comment = commentRepository.findById(commentId)
@@ -62,24 +64,26 @@ public class LikeService {
 
         Optional<Like> existingLike = likeRepository.findByUserIdAndCommentId(userId, commentId);
         boolean liked;
+        String message;
 
         if (existingLike.isPresent()) {
             likeRepository.delete(existingLike.get());
             liked = false;
+            message = "댓글 좋아요가 취소되었습니다.";
         } else {
             Like like = Like.builder()
                     .user(user)
                     .comment(comment)
+                    .post(comment.getPost())
                     .build();
             likeRepository.save(like);
             liked = true;
+            message = "댓글 좋아요가 추가되었습니다.";
         }
 
         long likeCount = likeRepository.countByCommentId(commentId);
-        return LikeResponseDto.builder()
-                .likeCount(likeCount)
-                .liked(liked)
-                .build();
+        
+        return SuccessResponse.of(message);
     }
 
     //본인이 게시글에 좋아요를 눌렀는지
