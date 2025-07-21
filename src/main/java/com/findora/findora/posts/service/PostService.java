@@ -56,7 +56,12 @@ public class PostService {
         // 조회수 증가
         post.incrementViewCount();
         
-        return PostResponseDto.fromEntity(post);
+        try {
+            return PostResponseDto.fromEntity(post);
+        } catch (Exception e) {
+            // 탈퇴한 사용자로 인한 오류 발생 시 안전하게 처리
+            throw new RuntimeException("게시글 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
     public List<PostResponseDto> getPostsByCategory(Long categoryId) {
