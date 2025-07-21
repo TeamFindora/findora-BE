@@ -34,6 +34,9 @@ public class PostResponseDto {
     @Schema(description = "본문")
     private String content;
 
+    @Schema(description = "조회수")
+    private Long viewCount;
+
     @Schema(description = "작성일자")
     private LocalDateTime createdAt;
 
@@ -42,15 +45,25 @@ public class PostResponseDto {
 
     // Entity → DTO 변환 메서드
     public static PostResponseDto fromEntity(Post post) {
+        // 사용자 정보 안전하게 가져오기
+        Long userId = null;
+        String userNickname = "탈퇴한 사용자";
+        
+        if (post.getUser() != null && !post.getUser().isDeleted()) {
+            userId = post.getUser().getId();
+            userNickname = post.getUser().getNickname();
+        }
+        
         return PostResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
+                .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .category(CategoryResponseDto.fromEntity(post.getCategory()))
-                .userId(post.getUser().getId())
-                .userNickname(post.getUser().getNickname())
+                .userId(userId)
+                .userNickname(userNickname)
                 .build();
     }
     /*userid

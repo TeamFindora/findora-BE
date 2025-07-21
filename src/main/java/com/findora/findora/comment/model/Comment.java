@@ -1,26 +1,31 @@
 package com.findora.findora.comment.model;
 
+import com.findora.findora.common.BaseEntity;
 import com.findora.findora.posts.model.Post;
+import com.findora.findora.users.model.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comment")
+@SQLDelete(sql = "UPDATE comment SET deleted = true, updated_at = NOW() WHERE id = ?")
+@Where(clause = "deleted = false")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Comment {
+@SuperBuilder
+public class Comment extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    /* user_id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;*/
+    @JoinColumn(name = "user_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -33,34 +38,12 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    //삭제상태표시 필드 추가
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;  // 삭제 여부 (기본값 false)
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
     public void updateContent(String content) {
         this.content = content;
     }
 
-    //삭제표시
-    /*외래키 제약 조건떄문에 오류가 발생하여 추가함*/
+    //삭제표시 (BaseEntity의 markAsDeleted 메서드 사용)
     public void markAsDeleted() {
-        this.isDeleted = true;
+        super.markAsDeleted(); // BaseEntity의 markAsDeleted() 호출
     }
-
 }
