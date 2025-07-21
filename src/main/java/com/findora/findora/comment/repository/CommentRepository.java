@@ -15,8 +15,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostIdAndDeletedFalse(Long postId);
     List<Comment> findByParentIdAndDeletedFalse(Long parentId);
 
-    // 삭제된 댓글도 포함해서 조회하는 메서드 (@Where 어노테이션 무시)
-    @Query(value = "SELECT * FROM comment WHERE post_id = :postId ORDER BY created_at ASC", nativeQuery = true)
+    // 삭제된 댓글도 포함해서 조회하는 메서드 (삭제된 User도 함께 조회)
+    @Query(value = "SELECT c.* FROM comment c LEFT JOIN users u ON c.user_id = u.id WHERE c.post_id = :postId ORDER BY c.created_at ASC", nativeQuery = true)
     List<Comment> findByPostIdIncludingDeleted(@Param("postId") Long postId);
 
 }

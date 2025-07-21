@@ -8,6 +8,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,6 +24,7 @@ public class Comment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
