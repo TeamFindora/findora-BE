@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class LikeController {
     private final LikeService likeService;
 
-    // 게시글 좋아요 상태 조회
+    // user의 게시글 좋아요 상태
     @GetMapping("/status")
     @Operation(summary = "게시글 좋아요 상태 조회")
     public ResponseEntity<LikeResponseDto> getPostLikeStatus(
@@ -26,7 +26,7 @@ public class LikeController {
         return ResponseEntity.ok(response);
     }
 
-    // 게시글 좋아요 토글
+    // 게시글 좋아요 누르기/취소
     @PostMapping("/toggle")
     @Operation(summary = "게시글 좋아요 토글 (좋아요 누르기/취소)")
     public ResponseEntity<LikeResponseDto> togglePostLike(
@@ -36,7 +36,7 @@ public class LikeController {
         return ResponseEntity.ok(response);
     }
 
-    // 댓글 좋아요 상태 조회
+    // user의 댓글 좋아요 상태
     @GetMapping("/comments/{commentId}/status")
     @Operation(summary = "댓글 좋아요 상태 조회")
     public ResponseEntity<LikeResponseDto> getCommentLikeStatus(
@@ -46,7 +46,7 @@ public class LikeController {
         return ResponseEntity.ok(response);
     }
 
-    // 댓글 좋아요 토글
+    // 댓글 좋아요 좋아요 누르기/취소
     @PostMapping("/comments/{commentId}/toggle")
     @Operation(summary = "댓글 좋아요 토글 (좋아요 누르기/취소)")
     public ResponseEntity<LikeResponseDto> toggleCommentLike(
