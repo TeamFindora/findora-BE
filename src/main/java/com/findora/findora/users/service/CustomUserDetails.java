@@ -53,4 +53,9 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return emailVerified;
     }
+
+    // Lombok @Getter가 인식되지 않는 경우를 위한 수동 getter
+    public Long getId() {
+        return this.id;
+    }
 } 
