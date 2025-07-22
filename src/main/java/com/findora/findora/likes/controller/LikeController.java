@@ -4,6 +4,7 @@ import com.findora.findora.likes.dto.LikeResponseDto;
 import com.findora.findora.likes.service.LikeService;
 import com.findora.findora.users.service.CustomUserDetails;
 import com.findora.findora.common.SuccessResponse;
+import com.findora.findora.likes.dto.LikeStatusResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +25,11 @@ public class LikeController {
     // user의 게시글 좋아요 상태
     @GetMapping("/status")
     @Operation(summary = "게시글 user의 좋아요 상태 ")
-    public ResponseEntity<LikeResponseDto> getPostLikeStatus(
+    public ResponseEntity<LikeStatusResponseDto> getPostLikeStatus(
             @PathVariable Long postId,
-            @AuthenticationPrincipal CustomUserDetails user,
-            @RequestParam(required = false) Long userId) {
-        LikeResponseDto response = likeService.getPostLikeStatus(postId, user.getId());
-            
+            @AuthenticationPrincipal CustomUserDetails user) {
+        
+        LikeStatusResponseDto response = likeService.getPostLikeStatus(postId, user.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -46,11 +46,12 @@ public class LikeController {
     // user의 댓글 좋아요 상태
     @GetMapping("/comments/{commentId}/status")
     @Operation(summary = "댓글 user의 좋아요 상태")
-    public ResponseEntity<LikeResponseDto> getCommentLikeStatus(
+    public ResponseEntity<LikeStatusResponseDto> getCommentLikeStatus(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails user) {
-        LikeResponseDto response = likeService.getCommentLikeStatus(commentId, user.getId());
+        
+        LikeStatusResponseDto response = likeService.getCommentLikeStatus(commentId, user.getId());
         return ResponseEntity.ok(response);
     }
 
