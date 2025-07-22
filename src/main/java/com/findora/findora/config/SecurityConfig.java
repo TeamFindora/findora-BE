@@ -65,6 +65,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/bookmarks").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/bookmarks").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/bookmarks/user/me").authenticated()
+
+                // 좋아요 인증 필요
+                .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/likes/toggle").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/status").authenticated()  // 로그인한 사용자의 좋아요 상태 조회
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/count").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/likes/comments/{commentId}/toggle").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/status").authenticated() // 로그인한 사용자의 댓글 좋아요 상태 조회
+                
                 // Swagger, 정적 리소스 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger").permitAll()
                 .requestMatchers("/*.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
@@ -103,10 +112,31 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("*"); // 모든 Origin 허용 (개발용)
-        configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
-        configuration.addAllowedHeader("*"); // 모든 헤더 허용
-        configuration.setAllowCredentials(true); // 자격 증명 허용
+        
+        // 허용할 Origin 명시적으로 설정 (개발 환경)
+        configuration.addAllowedOrigin("http://localhost:3000");  // React 기본 포트
+        configuration.addAllowedOrigin("http://localhost:3001");  // React 대체 포트
+        configuration.addAllowedOrigin("http://127.0.0.1:3000");
+        configuration.addAllowedOrigin("http://127.0.0.1:3001");
+        configuration.addAllowedOrigin("http://localhost:5173");  // Vite 기본 포트
+        configuration.addAllowedOrigin("http://127.0.0.1:5173");
+        
+        // 허용할 HTTP 메서드
+        configuration.addAllowedMethod("GET");
+        configuration.addAllowedMethod("POST");
+        configuration.addAllowedMethod("PUT");
+        configuration.addAllowedMethod("DELETE");
+        configuration.addAllowedMethod("PATCH");
+        configuration.addAllowedMethod("OPTIONS");
+        
+        // 허용할 헤더
+        configuration.addAllowedHeader("*");
+        
+        // 자격 증명 허용 (JWT 토큰 전송을 위해 필요)
+        configuration.setAllowCredentials(true);
+        
+        // preflight 요청 캐시 시간 설정
+        configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
