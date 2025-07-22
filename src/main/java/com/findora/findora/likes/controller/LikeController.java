@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 
 @Tag(name = "Like", description = "좋아요 API")
 @RestController
@@ -27,6 +29,7 @@ public class LikeController {
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam(required = false) Long userId) {
         LikeResponseDto response = likeService.getPostLikeStatus(postId, user.getId());
+            
         return ResponseEntity.ok(response);
     }
 
@@ -65,16 +68,17 @@ public class LikeController {
     // 게시글 좋아요 수 조회
     @GetMapping("/count")
     @Operation(summary = "게시글 좋아요 수 조회")
-    public ResponseEntity<Long> countPostLikes(@PathVariable Long postId) {
+    public ResponseEntity<Map<String, Long>> countPostLikes(@PathVariable Long postId) {
         long count = likeService.countPostLikes(postId);
-        return ResponseEntity.ok(count);
+        System.out.println("count: " + count);
+        return ResponseEntity.ok(Map.of("postLikeCount", count));
     }
 
     // 댓글 좋아요 수 조회
     @GetMapping("/comments/{commentId}/count")
     @Operation(summary = "댓글 좋아요 수 조회")
-    public ResponseEntity<Long> countCommentLikes(@PathVariable Long postId,@PathVariable Long commentId) {
+    public ResponseEntity<Map<String, Long>> countCommentLikes(@PathVariable Long postId,@PathVariable Long commentId) {
         long count = likeService.countCommentLikes(commentId);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(Map.of("commentLikeCount", count));
     }
 }

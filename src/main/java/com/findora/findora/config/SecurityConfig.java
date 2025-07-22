@@ -65,6 +65,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/bookmarks").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/bookmarks").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/bookmarks/user/me").authenticated()
+
+                // 좋아요 인증 필요
+                .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/likes/toggle").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/status").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/count").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/count").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/likes/comments/{commentId}/toggle").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/status").authenticated()
+                
                 // Swagger, 정적 리소스 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger").permitAll()
                 .requestMatchers("/*.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
