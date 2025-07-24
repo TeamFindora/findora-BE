@@ -30,11 +30,6 @@ import org.hibernate.annotations.NotFoundAction;
 @AllArgsConstructor
 @SuperBuilder
 public class Post extends BaseEntity {
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes = new ArrayList<>();
-
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
