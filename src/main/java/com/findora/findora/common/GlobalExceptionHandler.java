@@ -80,7 +80,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntimeException(RuntimeException ex, HttpServletRequest request) throws RuntimeException {
-            
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
             Map.of(
                 "error", "런타임 오류가 발생했습니다.",
