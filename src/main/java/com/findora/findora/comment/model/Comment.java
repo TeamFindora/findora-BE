@@ -1,6 +1,7 @@
 package com.findora.findora.comment.model;
 
 import com.findora.findora.common.BaseEntity;
+import com.findora.findora.likes.model.Like;
 import com.findora.findora.posts.model.Post;
 import com.findora.findora.users.model.User;
 import jakarta.persistence.*;
@@ -11,6 +12,8 @@ import org.hibernate.annotations.Where;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "comment")

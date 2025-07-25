@@ -73,7 +73,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/count").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/likes/comments/{commentId}/toggle").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/likes/comments/{commentId}/status").authenticated() // 로그인한 사용자의 댓글 좋아요 상태 조회
-                
                 // Swagger, 정적 리소스 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger").permitAll()
                 .requestMatchers("/*.html", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
