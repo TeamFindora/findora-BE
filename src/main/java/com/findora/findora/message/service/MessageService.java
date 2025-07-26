@@ -4,6 +4,9 @@ import com.findora.findora.message.dto.MessageRequestDto;
 import com.findora.findora.message.dto.MessageResponseDto;
 import com.findora.findora.message.model.Message;
 import com.findora.findora.message.repository.MessageRepository;
+import com.findora.findora.messageauth.model.MessageAuth;
+import com.findora.findora.messageauth.service.MessageAuthService;
+import com.findora.findora.messageauth.repository.MessageAuthRepository;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +24,12 @@ import java.util.Optional;
 public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-
+    private final MessageAuthRepository messageAuthRepository;
+    private final MessageAuthService messageAuthService;
     @Transactional
     public MessageResponseDto sendMessage(Long senderId, MessageRequestDto dto) {
+        MessageAuth messageAuth = messageAuthRepository.findByUserId(senderId)
+                .orElseThrow(() -> new IllegalArgumentException("쪽지 권한이 없습니다."));
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("보내는 회원이 존재하지 않습니다."));
         User receiver = userRepository.findById(dto.getReceiverId())
@@ -37,6 +43,7 @@ public class MessageService {
                 false
         );
         messageRepository.save(message);
+        messageAuthService.useAuthority(senderId);
         return new MessageResponseDto(message);
     }
 

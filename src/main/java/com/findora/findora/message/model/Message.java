@@ -3,14 +3,15 @@ package com.findora.findora.message.model;
 import com.findora.findora.common.BaseEntity;
 import com.findora.findora.users.model.User;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
+
 @NoArgsConstructor
 @Entity
+@Data
 @Table(name = "message")
 public class Message extends BaseEntity {
 
