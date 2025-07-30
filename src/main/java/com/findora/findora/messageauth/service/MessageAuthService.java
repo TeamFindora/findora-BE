@@ -6,6 +6,7 @@ import com.findora.findora.messageauth.repository.MessageAuthRepository;
 import com.findora.findora.posts.dto.PostResponseDto;
 import com.findora.findora.users.model.User;
 import com.findora.findora.users.repository.UserRepository;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class MessageAuthService {
                         log.error("사용자를 찾을 수 없습니다: userId={}", userId);
                         return new IllegalArgumentException("사용자를 찾을 수 없습니다.");
                     });
-            MessageAuth newAuth = new MessageAuth(user, 5);
+            MessageAuth newAuth = new MessageAuth(user, 5, false); // 5회 권한 부여
             messageAuthRepository.save(newAuth);
             log.info("새 사용자 권한 부여: userId={}, count=5", userId);
             return MessageAuthResponseDto.fromEntity(newAuth);
@@ -89,4 +90,23 @@ public class MessageAuthService {
         }
         return list;
     }
-}
+
+    //무제한 api 추가
+    @Transactional
+    public MessageAuthResponseDto grantUnlimitedAuth(Long userId) {
+        Optional<MessageAuth> optional = messageAuthRepository.findByUserId(userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+
+        MessageAuth auth = MessageAuth.builder()
+                .user(user)
+                .count(9999)  // 무제한인 경우 사용되지 않음
+                .isUnlimited(true)
+                .build();
+
+            messageAuthRepository.save(auth);
+            return MessageAuthResponseDto.fromEntity(auth);
+        }
+    }
+
