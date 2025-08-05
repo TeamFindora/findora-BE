@@ -2,15 +2,13 @@ package com.findora.findora.posts.controller;
 
 import java.util.List;
 
+import com.findora.findora.postsimage.dto.PostImageRequestDto;
+import com.findora.findora.postsimage.service.PostImageService;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,16 +20,18 @@ import com.findora.findora.users.service.CustomUserDetails;
 import com.findora.findora.common.SuccessResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 게시판 API 컨트롤러
@@ -40,26 +40,30 @@ import lombok.RequiredArgsConstructor;
  * - 비로그인: 모든 게시글 조회 가능 (댓글 제외)
  * - 로그인: 학생/교수 권한에 따라 다른 범위의 게시글 작성 가능
  */
+
+//userController에 STUDENT 권한 인증 api 만들기(+user 테이블에 이미지 컬럼 추가 필요)
+//프론트에서 이미지를 첨부하면 백엔드에서 이미지 주소 저장 기능 구현하기(+ 테이블 추가 필요)
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
 @Tag(name = "📝 게시판 API", description = "게시글 CRUD 및 카테고리별 조회 API")
 public class PostController {
     private final PostService postService;
+    private final PostImageService postImageService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
-        summary = "게시글 작성", 
-        description = "새로운 게시글을 작성합니다. 제목, 내용, 카테고리 ID가 필요합니다.",
-        security = @SecurityRequirement(name = "Authorization")
+            summary = "게시글 작성",
+            description = "게시글 제목, 내용, 카테고리ID를 필수로 입력해주세요(이미지 선택)."
     )
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+    /*@io.swagger.v3.oas.annotations.parameters.RequestBody(
         description = "게시글 작성 정보",
         required = true,
         content = @Content(
             mediaType = "application/json",
             schema = @Schema(implementation = PostRequestDto.class),
-            examples = @ExampleObject(
+                        examples = @ExampleObject(
                 name = "게시글 작성 예시",
                 value = """
                 {
@@ -70,7 +74,10 @@ public class PostController {
                 """
             )
         )
-    )
+
+    )*/
+
+
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200", 
@@ -112,9 +119,18 @@ public class PostController {
             description = "권한 부족 (해당 카테고리에 글 작성 권한 없음)"
         )
     })
-    public ResponseEntity<SuccessResponse> create(@AuthenticationPrincipal CustomUserDetails user, @Valid @RequestBody PostRequestDto dto) {
-        return ResponseEntity.ok(postService.createPost(dto, user.getId()));
+    public ResponseEntity<SuccessResponse> create(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @Parameter(description = "게시글의 데이터를 입력하세요.")
+            @RequestPart(value = "postData") @Valid PostRequestDto dto,
+            @RequestPart(value = "images", required = false)
+            @Parameter(description = "이미지 파일들 (최대 10개)")
+            List<MultipartFile> images
+    )
+    {
+        return ResponseEntity.ok(postService.createPost(dto, user.getId(), images));
     }
+
 
     @GetMapping
     @Operation(
@@ -145,7 +161,8 @@ public class PostController {
                          "title": "Spring Boot 질문드립니다",
                          "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다.",
                          "createdAt": "2025-07-07T14:30:00",
-                         "updatedAt": "2025-07-07T14:30:00"
+                         "updatedAt": "2025-07-07T14:30:00",
+                         "imageUrls": null
                        },
                        {
                          "id": 14,
@@ -160,7 +177,10 @@ public class PostController {
                          "title": "학과 공지사항",
                          "content": "2025년 1학기 수강신청 안내",
                          "createdAt": "2025-07-07T09:00:00",
-                         "updatedAt": "2025-07-07T09:00:00"
+                         "updatedAt": "2025-07-07T09:00:00",
+                         "imageUrls": [
+                                    "/uploads/posts/10/4e9f56a9-73af-490f-96fb-c098773beef8_hello.jpg"
+                                  ]
                        }
                      ]
                      """
@@ -201,7 +221,12 @@ public class PostController {
                        "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다. OneToMany 관계에서 N+1 문제를 어떻게 해결하는지 알고 싶습니다.",
                        "viewCount": 10,
                        "createdAt": "2025-07-07T14:30:00",
-                       "updatedAt": "2025-07-07T14:30:00"
+                       "updatedAt": "2025-07-07T14:30:00",
+                       "imageUrls": [
+                                    "/uploads/posts/10/4e9f56a9-73af-490f-96fb-c098773beef8_hello.jpg",
+                                    "/uploads/posts/10/4e9f56a9-73af-490f-96fb-c098773beef8_hello2.jpg",
+                                    "/uploads/posts/10/4e9f56a9-73af-490f-96fb-c098773beef8_hello3.jpg"
+                                  ]
                      }
                      """
                 )
@@ -258,7 +283,10 @@ public class PostController {
                          "title": "Spring Boot 질문드립니다",
                          "content": "Spring Boot에서 JPA 연관관계 매핑에 대해 질문이 있습니다.",
                          "createdAt": "2025-07-07T14:30:00",
-                         "updatedAt": "2025-07-07T14:30:00"
+                         "updatedAt": "2025-07-07T14:30:00",
+                         "imageUrls": [
+                                    "/uploads/posts/10/4e9f56a9-73af-490f-96fb-c098773beef8_hello.jpg"
+                                  ]
                        },
                        {
                          "id": 13,
@@ -273,7 +301,8 @@ public class PostController {
                          "title": "React 질문",
                          "content": "React Hook 사용법에 대해 궁금합니다.",
                          "createdAt": "2025-07-07T13:00:00",
-                         "updatedAt": "2025-07-07T13:00:00"
+                         "updatedAt": "2025-07-07T13:00:00",
+                         "imageUrls": null
                        }
                      ]
                      """
@@ -300,13 +329,14 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostsByCategory(categoryId));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value="/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
         summary = "게시글 수정", 
         description = "기존 게시글의 내용을 수정합니다. 작성자 본인만 수정 가능합니다. (카테고리는 수정 불가)",
         security = @SecurityRequirement(name = "Authorization")
     )
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+
+    /*@io.swagger.v3.oas.annotations.parameters.RequestBody(
         description = "수정할 게시글 정보 (카테고리는 수정 불가, 제목/내용만 입력)",
         required = true,
         content = @Content(
@@ -322,7 +352,7 @@ public class PostController {
                 """
             )
         )
-    )
+    )*/
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200", 
@@ -361,10 +391,21 @@ public class PostController {
     public ResponseEntity<SuccessResponse> update(
         @AuthenticationPrincipal CustomUserDetails user,
         @Parameter(description = "수정할 게시글 ID", example = "15", required = true)
-        @PathVariable Long id, 
-        @RequestBody PostRequestDto dto
-    ) {
-        return ResponseEntity.ok(postService.updatePost(id, dto, user.getId()));
+        @PathVariable Long id,
+
+        @Parameter(description = "게시글의 데이터를 입력하세요.")
+        @RequestPart(value = "postData") PostRequestDto dto,
+
+        @RequestPart(value = "remainImageIds", required = false)
+        @Parameter(description = "유지할 이미지의 ID 리스트 (Optional, 예: [1,2,3])")
+        List<Long> remainImageIds,
+
+        @RequestPart(value = "images", required = false)
+        @Parameter(description = "이미지 파일들 (최대 10개)")
+        List<MultipartFile> images
+    )
+    {
+        return ResponseEntity.ok(postService.updatePost(id, dto, user.getId(),images,remainImageIds));
     }
 
     @DeleteMapping("/{id}")
@@ -411,4 +452,5 @@ public class PostController {
     ) {
         return ResponseEntity.ok(postService.softDeletePost(id, user.getId()));
     }
+
 }

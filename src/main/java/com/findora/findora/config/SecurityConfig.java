@@ -52,6 +52,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/*/verify-email").permitAll()
                 .requestMatchers("/api/email/send-code").permitAll()
                 .requestMatchers("/api/email/verify-code").permitAll()
+                 // 업로드한 이미지 확인
+                .requestMatchers("/uploads/**").permitAll()
                 // 카테고리, 게시글 조회만 허용
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
@@ -61,6 +63,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/posts/{id}").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/{id}").authenticated()
+
+                // 게시글 이미지 url 인증 필요
+                .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/images").authenticated()
                 // 즐겨찾기 인증 필요
                 .requestMatchers(HttpMethod.POST, "/api/bookmarks").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/bookmarks").authenticated()
