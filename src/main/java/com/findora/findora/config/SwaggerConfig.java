@@ -1,7 +1,11 @@
 package com.findora.findora.config;
 
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.FileSchema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.models.media.Schema;
+
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -17,6 +21,12 @@ public class SwaggerConfig {
     
     @Bean
     public OpenAPI openAPI() {
+
+        Schema multipartFilesSchema = new ArraySchema()
+                .items(new FileSchema()
+                        .type("string")
+                        .format("binary"));
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Findora API")
@@ -35,6 +45,11 @@ public class SwaggerConfig {
                                 .bearerFormat("JWT")
                                 .description("JWT 토큰을 입력하세요 (Bearer 제외하고 토큰만 입력)")
                         )
+                        .addSchemas("MultipartFiles", multipartFilesSchema)
+
+
+
+
                 );
     }
 }
