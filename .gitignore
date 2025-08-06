@@ -14,10 +14,20 @@ target/
 .DS_Store
 
 # Spring Boot 환경설정 파일 무시 (개발용만 무시, docker용은 포함)
-# src/main/resources/application.properties
-# src/main/resources/application.yml
-# src/main/resources/application-*.properties
-# src/main/resources/application-*.yml
+src/main/resources/application.properties
+src/main/resources/application.yml
+src/main/resources/application-*.properties
+src/main/resources/application-*.yml
+
+# 빌드 결과물
+bin/
+out/
+
+# 환경 변수 파일
+.env
+.env.local
+.env.development
+.env.production
 
 # Docker volumes and data
 docker-data/
