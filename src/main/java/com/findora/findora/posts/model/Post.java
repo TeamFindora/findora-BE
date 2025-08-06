@@ -41,7 +41,6 @@ public class Post extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
-    @NotFound(action = NotFoundAction.IGNORE)
     private User user;
 
     @Column(nullable = false, length = 200)
