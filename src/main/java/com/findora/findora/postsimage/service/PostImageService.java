@@ -110,7 +110,6 @@ public class PostImageService {
     ) {
         // 1. 게시글 존재 여부 확인 및 권한 검증
         validatePostOwnership(postId, userId);
-
         List<String> updatedImageUrls = new ArrayList<>();
 
         // 이미지id로 삭제
@@ -134,6 +133,7 @@ public class PostImageService {
         }
         return updatedImageUrls;
     }
+
 
     @Operation(
         summary = "게시글 모든 이미지 삭제",
@@ -194,7 +194,6 @@ public class PostImageService {
         postImageRepository.delete(postImage);
         log.info("개별 이미지 삭제 완료: imageId={}, postId={}", imageId, postId);
     }
-
     private void deleteImagesExcept(Long postId, List<Long> remainImageIds) {
         postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
