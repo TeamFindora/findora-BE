@@ -27,7 +27,7 @@ services:
 
   # Spring Boot 애플리케이션
   app:
-    build: .
+    image: 612830574519.dkr.ecr.ap-northeast-2.amazonaws.com/findora-app:latest
     container_name: findora-app
     ports:
       - "8080:8080"
