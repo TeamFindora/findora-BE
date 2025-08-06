@@ -7,6 +7,7 @@ import java.util.List;
 import com.findora.findora.categories.model.Category;
 import com.findora.findora.common.BaseEntity;
 import com.findora.findora.likes.model.Like;
+import com.findora.findora.postsimage.model.PostImage;
 import com.findora.findora.users.model.User;
 
 import jakarta.persistence.*;
@@ -30,6 +31,10 @@ import org.hibernate.annotations.NotFoundAction;
 @AllArgsConstructor
 @SuperBuilder
 public class Post extends BaseEntity {
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
