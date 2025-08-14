@@ -46,7 +46,7 @@ public class PostService {
 
         // 이미지가 있는 경우 저장
         if (images != null && !images.isEmpty()) {
-            postImageService.savePostImages(saved.getId(), images);
+            postImageService.savePostImages(saved.getId(), images, userId);
         }
 
         return SuccessResponse.of("게시글 작성 성공하였습니다.");
@@ -93,7 +93,7 @@ public class PostService {
         }
         post.update(requestDto.getTitle(), requestDto.getContent(), post.getCategory());
         // 이미지 업데이트 (선택적 삭제 + 새 이미지 추가)
-        List<String> updatedImageUrls = postImageService.updatePostImages(id, images, remainImageIds);
+        List<String> updatedImageUrls = postImageService.updatePostImages(id, images, remainImageIds, userId);
         return SuccessResponse.of("게시글 수정 성공하였습니다.");
     }
 
@@ -110,7 +110,7 @@ public class PostService {
         commentService.deleteAllCommentsByPostId(id);
 
         //관련 이미지들을 먼저 삭제
-        postImageService.deleteAllPostImages(id);
+        postImageService.deleteAllPostImages(id, userId);
         
         // 게시글 삭제
         postRepository.delete(post);

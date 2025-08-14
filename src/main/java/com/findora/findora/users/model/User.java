@@ -58,7 +58,11 @@ public class User extends BaseEntity {
     private boolean emailVerified;
 
     public enum Role {
-        USER, STUDENT, PI, ADMIN
+        USER, STUDENT, PI, ADMIN, WAITING
+    }
+
+    public void changeRole(Role newRole) {
+        this.role = newRole;
     }
 
     // 편의 메서드 예시

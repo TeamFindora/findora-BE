@@ -1,10 +1,14 @@
 package com.findora.findora.postsimage.service;
 
+import com.findora.findora.common.service.S3Service;
 import com.findora.findora.posts.model.Post;
 import com.findora.findora.posts.repository.PostRepository;
 import com.findora.findora.postsimage.dto.PostImageResponseDto;
 import com.findora.findora.postsimage.model.PostImage;
 import com.findora.findora.postsimage.repository.PostImageRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,19 +24,23 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+@Tag(name = "PostImage Service", description = "게시글 이미지 관리 서비스")
 public class PostImageService {
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
-    private final FileService fileService;
+    private final S3Service s3Service;
 
-    //이미지 업로드
-    public List<String> savePostImages(Long postId, List<MultipartFile> images) {
-        // 1. 게시글 존재 여부 확인
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> {
-                    log.error("게시글을 찾을 수 없습니다: postId={}", postId);
-                    return new IllegalArgumentException("게시글을 찾을 수 없습니다.");
-                });
+    @Operation(
+        summary = "게시글 이미지 업로드",
+        description = "특정 게시글에 이미지를 업로드합니다. 최대 10개까지 업로드 가능합니다."
+    )
+    public List<String> savePostImages(
+        @Parameter(description = "게시글 ID", example = "1") Long postId,
+        @Parameter(description = "업로드할 이미지 파일들") List<MultipartFile> images,
+        @Parameter(description = "사용자 ID") Long userId
+    ) {
+        // 1. 게시글 존재 여부 확인 및 권한 검증
+        Post post = validatePostOwnership(postId, userId);
 
         // 2. 이미지가 없는 경우 빈 리스트 반환
         if (images == null || images.isEmpty()) {
@@ -42,7 +50,6 @@ public class PostImageService {
 
         log.debug("이미지 저장 프로세스 시작: postId={}, 이미지 개수={}", postId, images.size());
 
-
         //이미지 유효성 검사
         validateImageUpload(postId, images);
 
@@ -50,7 +57,10 @@ public class PostImageService {
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile image : images) {
                 log.debug("이미지 파일 저장 시작: filename={}", image.getOriginalFilename());
-                String imageUrl = fileService.saveFile(image, postId);
+                
+                // S3에 파일 업로드
+                String folderPath = String.format("posts/%d", postId);
+                String imageUrl = s3Service.uploadFile(image, folderPath);
                 log.info("이미지 업로드 성공 - URL: {}", imageUrl);
 
                 PostImage postImage = PostImage.builder()
@@ -71,16 +81,35 @@ public class PostImageService {
         }
     }
 
-    // 게시글 ID로 이미지 목록 조회
+    @Operation(
+        summary = "게시글 이미지 목록 조회",
+        description = "특정 게시글의 모든 이미지를 조회합니다."
+    )
     @Transactional(readOnly = true)
-    public List<PostImageResponseDto> getPostImages(Long postId) {
+    public List<PostImageResponseDto> getPostImages(
+        @Parameter(description = "게시글 ID", example = "1") Long postId
+    ) {
+        // 게시글 존재 여부만 확인 (조회는 모든 사용자가 가능)
+        postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                
         return postImageRepository.findByPostId(postId).stream()
                 .map(PostImageResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // 게시글 이미지 수정
-    public List<String> updatePostImages(Long postId, List<MultipartFile> newImagesList, List<Long> remainImageIds) {
+    @Operation(
+        summary = "게시글 이미지 수정",
+        description = "게시글의 이미지를 수정합니다. 기존 이미지를 삭제하고 새로운 이미지를 추가할 수 있습니다."
+    )
+    public List<String> updatePostImages(
+        @Parameter(description = "게시글 ID", example = "1") Long postId,
+        @Parameter(description = "새로 추가할 이미지 파일들") List<MultipartFile> newImagesList,
+        @Parameter(description = "유지할 기존 이미지 ID 목록") List<Long> remainImageIds,
+        @Parameter(description = "사용자 ID") Long userId
+    ) {
+        // 1. 게시글 존재 여부 확인 및 권한 검증
+        validatePostOwnership(postId, userId);
         List<String> updatedImageUrls = new ArrayList<>();
 
         // 이미지id로 삭제
@@ -91,7 +120,8 @@ public class PostImageService {
         if (newImagesList != null && !newImagesList.isEmpty()) {
             for (MultipartFile image : newImagesList) {
                 if (!image.isEmpty()) {
-                    String imageUrl = fileService.saveFile(image, postId);
+                    String folderPath = String.format("posts/%d", postId);
+                    String imageUrl = s3Service.uploadFile(image, folderPath);
                     PostImage postImage = PostImage.builder()
                             .imageUrl(imageUrl)
                             .post(postRepository.getReferenceById(postId))
@@ -104,18 +134,24 @@ public class PostImageService {
         return updatedImageUrls;
     }
 
-    // 게시글 ID로 모든 이미지 삭제
-    public void deleteAllPostImages(Long postId) {
-        // 1. 게시글 존재 여부 확인
-        postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+    @Operation(
+        summary = "게시글 모든 이미지 삭제",
+        description = "특정 게시글의 모든 이미지를 삭제합니다. S3에서도 파일이 삭제됩니다."
+    )
+    public void deleteAllPostImages(
+        @Parameter(description = "게시글 ID", example = "1") Long postId,
+        @Parameter(description = "사용자 ID") Long userId
+    ) {
+        // 1. 게시글 존재 여부 확인 및 권한 검증
+        validatePostOwnership(postId, userId);
 
         List<PostImage> images = postImageRepository.findByPostId(postId);
 
         // 2. 각 이미지 파일 삭제
         for (PostImage image : images) {
             try {
-                fileService.deleteFile(image.getImageUrl());
+                s3Service.deleteFile(image.getImageUrl());
             } catch (Exception e) {
                 log.error("이미지 파일 삭제 실패: {}", image.getImageUrl(), e);
             }
@@ -126,6 +162,38 @@ public class PostImageService {
         log.info("게시글의 모든 이미지 삭제 완료: postId={}", postId);
     }
 
+    @Operation(
+        summary = "개별 이미지 삭제",
+        description = "특정 게시글의 개별 이미지를 삭제합니다. S3에서도 파일이 삭제됩니다."
+    )
+    public void deletePostImage(
+        @Parameter(description = "게시글 ID", example = "1") Long postId,
+        @Parameter(description = "이미지 ID", example = "1") Long imageId,
+        @Parameter(description = "사용자 ID") Long userId
+    ) {
+        // 1. 게시글 존재 여부 확인 및 권한 검증
+        validatePostOwnership(postId, userId);
+
+        // 2. 이미지 존재 여부 확인 및 게시글 소유권 검증
+        PostImage postImage = postImageRepository.findByIdAndPostId(imageId, postId)
+                .orElseThrow(() -> {
+                    log.error("이미지를 찾을 수 없습니다: imageId={}, postId={}", imageId, postId);
+                    return new IllegalArgumentException("이미지를 찾을 수 없습니다.");
+                });
+
+        // 3. S3에서 이미지 파일 삭제
+        try {
+            s3Service.deleteFile(postImage.getImageUrl());
+            log.info("S3에서 이미지 파일 삭제 완료: {}", postImage.getImageUrl());
+        } catch (Exception e) {
+            log.error("S3에서 이미지 파일 삭제 실패: {}", postImage.getImageUrl(), e);
+            throw new RuntimeException("이미지 파일 삭제 중 오류가 발생했습니다.", e);
+        }
+
+        // 4. DB에서 이미지 정보 삭제
+        postImageRepository.delete(postImage);
+        log.info("개별 이미지 삭제 완료: imageId={}, postId={}", imageId, postId);
+    }
     private void deleteImagesExcept(Long postId, List<Long> remainImageIds) {
         postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -157,7 +225,7 @@ public class PostImageService {
         for (PostImage image : existingImages) {
             if (remainImageIds == null || !remainImageIds.contains(image.getId())) {
                 try {
-                    fileService.deleteFile(image.getImageUrl());
+                    s3Service.deleteFile(image.getImageUrl());
                     postImageRepository.delete(image);
                     log.info("이미지 삭제 완료: imageId={}, postId={}", image.getId(), postId);
                 } catch (Exception e) {
@@ -208,5 +276,29 @@ public class PostImageService {
             }
 
         }
+    }
+
+    /**
+     * 게시글 소유권 검증
+     * @param postId 게시글 ID
+     * @param userId 사용자 ID
+     * @return 검증된 Post 엔티티
+     * @throws IllegalArgumentException 게시글이 없거나 소유자가 아닌 경우
+     */
+    private Post validatePostOwnership(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("게시글을 찾을 수 없습니다: postId={}", postId);
+                    return new IllegalArgumentException("게시글을 찾을 수 없습니다.");
+                });
+
+        // 게시글 작성자와 요청한 사용자가 다른 경우
+        if (!post.getUser().getId().equals(userId)) {
+            log.error("게시글 소유자가 아닙니다: postId={}, userId={}, postOwnerId={}", 
+                     postId, userId, post.getUser().getId());
+            throw new IllegalArgumentException("게시글 작성자만 이미지를 관리할 수 있습니다.");
+        }
+
+        return post;
     }
 }
