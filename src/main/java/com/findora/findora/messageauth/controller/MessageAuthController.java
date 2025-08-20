@@ -30,13 +30,6 @@ public class MessageAuthController {
         return ResponseEntity.ok(messageAuthService.grantAuth(userId));
     }
 
-    @Operation(summary = "무제한 쪽지 사용자 등록")
-    @PostMapping("/grant/unlimited/{userId}")
-    public ResponseEntity<String> forceGrantUnlimited(@RequestParam Long userId) {
-        messageAuthService.grantUnlimitedAuth(userId);
-        return ResponseEntity.ok("무제한 쪽지 권한 사용자 등록");
-    }
-
     @Operation(summary = "쪽지 사용", description = "쪽지 보낼 때 count 1회 차감")
     @PostMapping("/use/{userId}")
     public ResponseEntity<String> useAuthority(@PathVariable Long userId) {

@@ -61,8 +61,15 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/posts/category/{categoryId}").permitAll()
                 // 게시글 작성/수정/삭제 인증 필요
                 .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/posts/{id}").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/qapi/posts/{id}").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/posts/{id}").authenticated()
+                // 학생증 이미지 업로드
+                .requestMatchers(HttpMethod.POST, "/api/users/upload").authenticated()
+                // 학생증 승인/거절 인증 필요
+                .requestMatchers(HttpMethod.PUT, "/api/user-images/{userId}/approve").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/user-images/{userId}/reject").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/user-images//students").hasRole("ADMIN")
+
 
                 // 게시글 이미지 url 인증 필요
                 .requestMatchers(HttpMethod.POST, "/api/posts/{postId}/images").authenticated()
